@@ -75,19 +75,23 @@ for(FP in unique(dat.tree$ForestryPlot)){
 # Getting some plot-level stats using 'aggregate' funciton
 # -------------
 # Getting the mean DBH
-dat.subplot <- aggregate(dat.tree[,c("DBH")], 
+dat.subplot <- aggregate(dat.tree[,c("DBH", "SubPlotRadius_m")], 
                          by=dat.tree[,c("ForestryPlot", "SubPlot")],
                          FUN=mean) 
-names(dat.subplot)[which(names(dat.subplot)=="x")] <- "DBH.mean"
+# names(dat.subplot)[which(names(dat.subplot)=="x")] <- "DBH.mean"
 dat.subplot$DBH.sd <- aggregate(dat.tree[,c("DBH")],
                                 by=dat.tree[,c("ForestryPlot", "SubPlot")],
                                 FUN=sd)[,"x"] 
 dat.subplot$n.trees <- aggregate(dat.tree[,c("DBH")],
                                  by=dat.tree[,c("ForestryPlot", "SubPlot")],
                                  FUN=length)[,"x"] 
-dat.subplot[,c("Density", "BasalArea")] <- aggregate(dat.tree[,c("Density", "BasalArea")],
+dat.subplot[,c("Density", "BasalArea.tot")] <- aggregate(dat.tree[,c("Density", "BasalArea")],
                                                      by=dat.tree[,c("ForestryPlot", "SubPlot")],
                                                      FUN=sum)[,c("Density", "BasalArea")] 
+summary(dat.subplot)
+
+# Correcting basal area for differences in plot size; BA is in cm2
+dat.subplot$BasalArea.Dens <- dat.subplot$BasalArea.tot/(pi*dat.subplot$SubPlotRadius_m^2)
 summary(dat.subplot)
 
 
@@ -97,15 +101,17 @@ summary(dat.subplot)
 
 # png(file.path(path.save, paste0("ForestryPlot_Summary_BasalArea_MycoType.png")), height=8, width=8, units="in", res=120)
 ggplot(data=dat.subplot) +
-  geom_boxplot(aes(x=ForestryPlot, y=BasalArea, fill=MycoType)) +
+  geom_boxplot(aes(x=ForestryPlot, y=BasalArea.Dens, fill=MycoType)) +
+  scale_y_continuous(name="Basal Area cm2/m2") +
   theme_bw() +
   theme(axis.text.x = element_text(angle=-45, hjust=0))
 # dev.off()
 
 # png(file.path(path.save, paste0("ForestryPlot_Summary_BasalArea_WoodType.png")), height=8, width=8, units="in", res=120)
 ggplot(data=dat.subplot) +
-  geom_boxplot(aes(x=ForestryPlot, y=BasalArea, fill=WoodType)) +
+  geom_boxplot(aes(x=ForestryPlot, y=BasalArea.Dens, fill=WoodType)) +
+  scale_y_continuous(name="Basal Area cm2/m2") +
   theme_bw() +
   theme(axis.text.x = element_text(angle=-45, hjust=0))
-# dev.off()
+# dev.off( )
 # -------------
