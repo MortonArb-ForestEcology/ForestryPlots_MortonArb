@@ -48,20 +48,25 @@ ggplot(data=dat.tree[dat.tree$SubPlot==721,]) +
   scale_y_continuous(limits=c(0,unique(dat.tree[dat.tree$SubPlot==721,"SubPlotRadius_m"])), expand=c(0,0)) +
   coord_polar()
 
-# Making an example graphing EVERYTHING
-FP <- "CAOV-E" # soft-coding a forestry plot to graph
-
-# Uncomment out png(...) and dev.off() (below plot) to automatically create a file with these dimensions & resolution
-# png(file.path(path.save, paste0("ForestryPlot_StemMap_",FP,".png")), height=8, width=8, units="in", res=120)
-ggplot(data=dat.tree[dat.tree$ForestryPlot==FP,]) +
-  facet_wrap(~SubPlot) + # Each plot gets its own panel
-  geom_point(aes(x=Azimuth2, y=Dist.from.Center, size=DBH)) +
-  coord_polar() + # This is what makes it wrap around
-  scale_x_continuous(limits=c(0,360), expand=c(0,0),
-                     breaks=c(0,90,180,270), labels=c("N", "E", "S", "W")) + # This makes sure the values range 0-360
-  scale_y_continuous(limits=c(0,max(dat.tree[dat.tree$ForestryPlot==FP,"SubPlotRadius_m"])), expand=c(0,0)) + # This makes sure the center is 0
-  ggtitle(FP) +
-  theme_bw()
+# Making an example graphing each Forestry plot and saving as a multi-paged PDF
+# Uncomment out pdf(...) and dev.off() (below plot) to automatically create a file with these dimensions & resolution
+# pdf(file.path(path.save, "ForestryPlot_StemMaps_All.pdf"), height=8, width=8)
+for(FP in unique(dat.tree$ForestryPlot)){
+  # FP <- "CAOV-E" # soft-coding a forestry plot to graph if you want to test this
+  # Note: the print() statement is needed because it's in a loop and sometimes that causes weird thigns
+  print(
+  ggplot(data=dat.tree[dat.tree$ForestryPlot==FP,]) +
+    facet_wrap(~SubPlot, ncol=2) + # Each plot gets its own panel
+    geom_point(aes(x=Azimuth2, y=Dist.from.Center, size=DBH)) +
+    coord_polar() + # This is what makes it wrap around
+    scale_x_continuous(limits=c(0,360), expand=c(0,0),
+                       breaks=c(0,90,180,270), labels=c("N", "E", "S", "W")) + # This makes sure the values range 0-360
+    scale_y_continuous(limits=c(0,max(dat.tree[dat.tree$ForestryPlot==FP,"SubPlotRadius_m"])), expand=c(0,0)) + # This makes sure the center is 0
+    ggtitle(FP) +
+    theme_bw()
+  )
+  
+}
 # dev.off()
 
 # -------------
