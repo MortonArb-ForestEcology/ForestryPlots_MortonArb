@@ -5,7 +5,7 @@
 # -------------
 # Some quick general things we'll reference later
 # -------------
-library(ggplot2) # Sometimes I call packages with ::, but I find that's a pain with ggplot 
+# library(ggplot2) # Sometimes I call packages with ::, but I find that's a pain with ggplot 
 
 path.dat <- "/Volumes/GoogleDrive/My Drive/Forestry Plots (1)/Rollinson_2019_REU_ForestryPlots/data/"
 # -------------
@@ -13,9 +13,12 @@ path.dat <- "/Volumes/GoogleDrive/My Drive/Forestry Plots (1)/Rollinson_2019_REU
 # -------------
 # Reading in the data and doing some quick stats
 # -------------
-PLOT <- "TSCA-W2"
+# Change this to the path of where the data you're working with right now is.
+path.raw <- "/Volumes/GoogleDrive/My Drive/Forestry Plots (1)/Rollinson_2019_REU_ForestryPlots/data/RingsWidths_Raw/PIST-E/"
 
-fplot <- dir(file.path(path.dat, "RingsWidths_Raw", PLOT), ".rwl")
+# PLOT <- "PIST-E" #
+# fplot <- dir(file.path(path.dat, "RingsWidths_Raw", PLOT), ".rwl")
+fplot <- dir(path.raw, ".rwl")
 
 for(i in 1:length(fplot)){
   # need to read in a file and rename it; i=1
@@ -33,7 +36,13 @@ for(i in 1:length(fplot)){
 }
 summary(rwl.all)
 
-dplR::write.rwl(rwl.all, file.path(path.dat, "RingWidths_Combined_Undated", paste0(PLOT,".rwl")), long.names=T)
+# Where you want to save the file
+path.out <- "/Volumes/GoogleDrive/My Drive/Forestry Plots (1)/Rollinson_2019_REU_ForestryPlots/data/RingWidths_Combined_Undated/"
+
+# What you want the name of the file to be
+file.prefix <- "TEST"
+
+dplR::write.rwl(rwl.all, file.path(path.out, paste0(file.prefix, ".rwl")), long.names=T)
 
 # xdate1 <- dplR::corr.rwl.seg(rwl.all, seg.length=10)
 
