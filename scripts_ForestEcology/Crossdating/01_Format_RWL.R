@@ -7,18 +7,20 @@
 # -------------
 # library(ggplot2) # Sometimes I call packages with ::, but I find that's a pain with ggplot 
 
-path.dat <- "/Volumes/GoogleDrive/My Drive/Forestry Plots (1)/Rollinson_2019_REU_ForestryPlots/data/"
 # -------------
 
 # -------------
 # Reading in the data and doing some quick stats
 # -------------
-# Change this to the path of where the data you're working with right now is.
-path.raw <- "/Volumes/GoogleDrive/My Drive/Forestry Plots (1)/Rollinson_2019_REU_ForestryPlots/data/RingsWidths_Raw/PIST-E/"
+## Hard-coding approach: simpler code, but have to change more parts manually
+## Change this to the path of where the data you're working with right now is.
+# path.raw <- "/Volumes/GoogleDrive/My Drive/Forestry Plots (1)/Rollinson_2019_REU_ForestryPlots/data/RingsWidths_Raw/PIST-E/"
+# fplot <- dir(path.raw, ".rwl")
 
-# PLOT <- "PIST-E" #
-# fplot <- dir(file.path(path.dat, "RingsWidths_Raw", PLOT), ".rwl")
-fplot <- dir(path.raw, ".rwl")
+# Soft-coding approach = better more flexible code, but easier to break if you don't understand what's going on
+PLOT <- "PIST-W" #
+path.dat <- "/Volumes/GoogleDrive/My Drive/Forestry Plots (1)/Rollinson_2019_REU_ForestryPlots/data/"
+fplot <- dir(file.path(path.dat, "RingsWidths_Raw", PLOT), ".rwl")
 
 for(i in 1:length(fplot)){
   # need to read in a file and rename it; i=1
@@ -36,11 +38,13 @@ for(i in 1:length(fplot)){
 }
 summary(rwl.all)
 
+
 # Where you want to save the file
-path.out <- "/Volumes/GoogleDrive/My Drive/Forestry Plots (1)/Rollinson_2019_REU_ForestryPlots/data/RingWidths_Combined_Undated/"
+path.out <- file.path("COFECHA/", PLOT)
 
 # What you want the name of the file to be
-file.prefix <- "TEST"
+# file.prefix <- "TEST"
+file.prefix <- paste(PLOT, Sys.Date(), sep="_")
 
 dplR::write.rwl(rwl.all, file.path(path.out, paste0(file.prefix, ".rwl")), long.names=T)
 
