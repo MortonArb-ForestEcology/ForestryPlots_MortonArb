@@ -26,14 +26,17 @@ dat.daymet <- read.csv(file.path(path.google, "data/Meteorology/", "Daymet_Morto
 summary(dat.daymet)
 
 # Doing a 7-day smoothing of the met data; anchored on the date so that it's a cumulative effect
-vars.pred <- c("prcp.mm", "tmax.C", "tmin.C", "vp.Pa", "srad.Wm2")
+# vars.pred <- c("prcp.mm", "tmax.C", "tmin.C", "vp.Pa", "srad.Wm2")
+vars.pred <- c("prcp.mm", "tmax.C", "vp.Pa")
 for(i in 1:length(vars.pred)){
   dat.daymet[,paste0(vars.pred[i], ".wk")] <- zoo::rollapply(dat.daymet[,vars.pred[i]], width=7, align="right", FUN=mean, fill=NA)
   
 }
 
 # Setting up a ~6-month lag (after the solstice)
-dat.lag <- dat.daymet[dat.daymet$yday>172 & dat.daymet$yday<366,]
+yday.solstice.sum <- lubridate::yday("2019-06-21")
+yday.equinox.aut <- lubridate::yday("2019-09-23")
+dat.lag <- dat.daymet[dat.daymet$yday>=yday.equinox.aut & dat.daymet$yday<366,]
 dat.lag$year <- dat.lag$year+1
 dat.lag$yday <- dat.lag$yday-365
 summary(dat.lag)
@@ -53,7 +56,8 @@ summary(dat.all)
 # ----------------------------------
 plt.use <- unique(dat.all$PlotID)
 days.use <- min(dat.all$yday):max(dat.all$yday)
-vars.resp <- c("BAI.cm2", "RWI")
+# vars.resp <- c("BAI.cm2", "RWI")
+vars.resp="RWI"
 mod.out <- data.frame(yday=rep(days.use), 
                       PlotID=rep(rep(plt.use, each=length(days.use)), length.out=length(days.use)*length(plt.use)*length(vars.resp)*length(vars.pred)),
                       resp=rep(rep(vars.resp, each=length(days.use)*length(plt.use)), length.out=length(days.use)*length(plt.use)*length(vars.resp)*length(vars.pred)),
@@ -82,8 +86,8 @@ for(plt in unique(dat.all$PlotID)){
       dat.tmp$PRED <- dat.tmp[,paste0(VAR, ".wk")]
       dat.tmp <- dat.tmp[!is.na(dat.tmp$PRED),]
       # if(VAR=="prcp.mm"){
-        # dat.tmp$PRED[dat.tmp$PRED==0] <- 1e-3
-        # dat.tmp$PRED <- log(dat.tmp$PRED)
+      # dat.tmp$PRED[dat.tmp$PRED==0] <- 1e-3
+      # dat.tmp$PRED <- log(dat.tmp$PRED)
       # } 
       
       
@@ -118,6 +122,7 @@ for(plt in unique(dat.all$PlotID)){
 }
 summary(mod.out)
 summary(mod.out[mod.out$PlotID=="QUBI-W",])
+summary(mod.out[!is.na(mod.out$p.val),])
 write.csv(mod.out, file.path(path.google, "data/CriticalPeriods", "ClimateCorrs_Daily.csv"), row.names=F)  
 
 # ----------------------------------
