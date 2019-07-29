@@ -95,6 +95,8 @@ drought.min$type <- as.factor("summer.min")
 summary(drought.min)
 
 plot(pdsi.ncdc ~ pdsi.wrcc, data=drought.min)
+drought.min[drought.min$pdsi.ncdc<=-4,]
+
 drought.min[drought.min$pdsi.ncdc<=-3,]
 drought.min[drought.min$pdsi.wrcc<=-3,]
 # drought.min[drought.min$spei.wrcc<=-1,]
@@ -152,10 +154,11 @@ dev.off()
 # ---------------------------------------
 dat.tr <- read.csv(file.path(path.google, "data", "Data_TreeRings_compiled_all.csv"))
 dat.tr$TreeID <- as.factor(substr(dat.tr$CoreID, 1, 6))
+dat.tr <- dat.tr[dat.tr$year<2019,] # Exclude our incomplete year
 summary(dat.tr)
 
 # Just roll with the mean summer drought status right now
-dat.all <- merge(dat.tr, drought.mean, all.x=T)
+dat.all <- merge(dat.tr, drought.min, all.x=T)
 summary(dat.all)
 
 
@@ -169,7 +172,7 @@ ggplot(data=dat.all[,]) +
 dev.off()
 
 yrs.drought <- unique(dat.all[dat.all$pdsi.ncdc<=-3, "year"])
-yrs.drought <- yrs.drought[yrs.drought!=1964] # Taking out 1964 because it's on the heels of 1963
+yrs.drought <- yrs.drought[!yrs.drought %in% c(1964, 2006)] # Taking out 1964 because it's on the heels of 1963
 # yrs.drought <- yrs.drought[years.drought %in% ]
 
 # There's gotta be a better way to do the lag designation, but this works
