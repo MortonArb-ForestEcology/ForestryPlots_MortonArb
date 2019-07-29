@@ -1,3 +1,4 @@
+# Very similar to other script, but using classic dendro SEA to verify
 library(ggplot2)
 
 path.google <- "/Volumes/GoogleDrive/My Drive/Forestry Plots/Rollinson_2019_REU_ForestryPlots/"
@@ -35,7 +36,7 @@ names(wrcc.drought) <- c("pdsi.wrcc", "month.name")
 wrcc.drought$year <- pdsi.wrcc$Year
 wrcc.drought$spei.wrcc <- stack(spei.wrcc[,2:ncol(spei.wrcc)])[,1]
 wrcc.drought$month <- car::recode(wrcc.drought$month.name, 
-                                 "'Jan'='01'; 
+                                  "'Jan'='01'; 
                                   'Feb'='02'; 
                                   'Mar'='03'; 
                                   'Apr'='04'; 
@@ -76,8 +77,8 @@ drought.all$source <- ifelse(stringr::str_sub(drought.all$ind, -4, -1)=="ncdc", 
 summary(drought.all)
 
 drought.mean <- aggregate(drought.merge[drought.merge$month %in% c("06", "07", "08"),c("pdsi.ncdc", "pdsi.wrcc", "spei.wrcc"),],
-                         by=list(drought.merge[drought.merge$month %in% c("06", "07", "08"),c("year"),]),
-                         FUN=mean)
+                          by=list(drought.merge[drought.merge$month %in% c("06", "07", "08"),c("year"),]),
+                          FUN=mean)
 names(drought.mean)[1] <- c("year")
 drought.mean$type <- as.factor("summer.mean")
 summary(drought.mean)
@@ -88,8 +89,8 @@ drought.mean[drought.mean$pdsi.wrcc<=-3,]
 drought.mean[drought.mean$spei.wrcc<=-1,]
 
 drought.min <- aggregate(drought.merge[drought.merge$month %in% c("06", "07", "08"),c("pdsi.ncdc", "pdsi.wrcc", "spei.wrcc"),],
-                          by=list(drought.merge[drought.merge$month %in% c("06", "07", "08"),c("year"),]),
-                          FUN=min)
+                         by=list(drought.merge[drought.merge$month %in% c("06", "07", "08"),c("year"),]),
+                         FUN=min)
 names(drought.min)[1] <- c("year")
 drought.min$type <- as.factor("summer.min")
 summary(drought.min)
@@ -150,111 +151,61 @@ dev.off()
 # ---------------------------------------
 # 2. Bring in tree-ring data to look at responses
 # ---------------------------------------
-dat.tr <- read.csv(file.path(path.google, "data", "Data_TreeRings_compiled_all.csv"))
-dat.tr$TreeID <- as.factor(substr(dat.tr$CoreID, 1, 6))
-summary(dat.tr)
-
-# Just roll with the mean summer drought status right now
-dat.all <- merge(dat.tr, drought.mean, all.x=T)
-summary(dat.all)
-
-
-png(file.path(path.google, "figures/Drought_Response", "Exploratory_Drought_RWI_all.png"), height=8, width=10, units="in", res=120)
-ggplot(data=dat.all[,]) +
-  facet_wrap(~PlotID, scales="free") +
-  geom_point(aes(x=pdsi.ncdc, y=RWI), size=0.5, color="gray50") +
-  stat_smooth(aes(x=pdsi.ncdc, y=RWI), method="lm", color="blue", fill="blue", alpha=0.5) +
-  geom_hline(yintercept=1, linetype="dashed", color="black") +
-  theme_bw()
-dev.off()
-
 yrs.drought <- unique(dat.all[dat.all$pdsi.ncdc<=-3, "year"])
-yrs.drought <- yrs.drought[yrs.drought!=1964] # Taking out 1964 because it's on the heels of 1963
-# yrs.drought <- yrs.drought[years.drought %in% ]
+yrs.drought <- yrs.drought[yrs.drought!=1964] # Taking out 1964 
 
-# There's gotta be a better way to do the lag designation, but this works
-dat.all$drought.lag <- NA
-dat.all$drought.lag[dat.all$year %in% (yrs.drought-5)] <- -5
-dat.all$drought.lag[dat.all$year %in% (yrs.drought+5)] <- +5
-dat.all$drought.lag[dat.all$year %in% (yrs.drought-4)] <- -4
-dat.all$drought.lag[dat.all$year %in% (yrs.drought+4)] <- +4
-dat.all$drought.lag[dat.all$year %in% (yrs.drought-3)] <- -3
-dat.all$drought.lag[dat.all$year %in% (yrs.drought+3)] <- +3
-dat.all$drought.lag[dat.all$year %in% (yrs.drought-2)] <- -2
-dat.all$drought.lag[dat.all$year %in% (yrs.drought+2)] <- +2
-dat.all$drought.lag[dat.all$year %in% (yrs.drought-1)] <- -1
-dat.all$drought.lag[dat.all$year %in% (yrs.drought+1)] <- +1
-dat.all$drought.lag[dat.all$year %in% yrs.drought] <- 0
+path.rwl <- file.path(path.google, "data/RingsWidths_Raw/crossdated/")
 
-summary(dat.all)
+# Get a list of the files (plots) we have available
+files.rwl <- dir(path.rwl, ".rwl")
 
-png(file.path(path.google, "figures/Drought_Response", "Exploratory_Drought_lag_RWI_all.png"), height=8, width=10, units="in", res=120)
-ggplot(data=dat.all[!is.na(dat.all$drought.lag),]) +
-  facet_wrap(~PlotID, scales="free") +
-  geom_boxplot(aes(x=as.factor(drought.lag), y=RWI)) +
-  geom_hline(yintercept=1, linetype="solid", color="blue") +
-  theme_bw()
-dev.off()
-
-
-dat.all$RWI.cent <- dat.all$RWI-1
-
-# Trying to re-center drought event & recovery; this should result in something similar to the standard dendro SEA, but using more ecological-based stats 
-for(CORE in unique(dat.all$CoreID)){
-  for(YR in unique(dat.all[!is.na(dat.all$drought.lag) & dat.all$CoreID==CORE & dat.all$drought.lag==0,"year"])){
-    val.cent <- mean(dat.all[dat.all$CoreID==CORE & dat.all$year %in% (YR-5):(YR-1) & dat.all$drought.lag<0 & !is.na(dat.all$drought.lag),"RWI"], na.rm=T)
-    dat.all[dat.all$CoreID==CORE & dat.all$year %in% (YR-5):(YR+5),"RWI.rel"] <- dat.all[dat.all$CoreID==CORE & dat.all$year %in% (YR-5):(YR+5),"RWI"] - val.cent
- } # end years 
-} # end cores
-summary(dat.all)
-
-
-# --------------
-# Running the calculation
-# --------------
-# Setting up a table to stick our output
-drought.resp <- data.frame(drought.lag=rep(-5:5),
-                           PlotID=rep(unique(dat.all$PlotID), each=length(-5:5)),
-                           estimate=NA,
-                           p.val=NA)
-
-for(PLT in unique(dat.all$PlotID)){
-  drought.lag <- nlme::lme(RWI.rel ~ as.factor(drought.lag)-1, random=list(TreeID=~1, CoreID=~1), data=dat.all[dat.all$PlotID==PLT & !is.na(dat.all$drought.lag) & !is.na(dat.all$RWI.rel), ])
-  mod.sum <- summary(drought.lag)
-  # mod.sum$tTable
+# Loop through each file and do some stuff to it
+# dat.all <- data.frame() # Set up a empty data frame to store everything in
+sea.all <- data.frame()
+for(plt in 1:length(files.rwl)){
+  PLT <- stringr::str_split(files.rwl[plt], "_")[[1]][1]
   
-  drought.resp[drought.resp$PlotID==PLT,"estimate"] <- mod.sum$tTable[,"Value"]
-  drought.resp[drought.resp$PlotID==PLT,"p.val"] <- mod.sum$tTable[,"p-value"]
+  # We have some plots that don't have "_combined" as part of the name & 
+  # we want to exclude .rwl from the PlotID
+  if(stringr::str_sub(PLT,-4,-1)==".rwl") PLT <- stringr::str_sub(PLT,1,-5)
   
+  # -----------  
+  # 1. Read in & detrend the raw ring width data
+  # -----------  
+  # Get the raw data
+  dat.rwl <- dplR::read.rwl(file.path(path.rwl, files.rwl[plt])) # read in raw data
+  
+  # Detrend ring-widths to remove potentially confounding tree-level temporal trends
+  #  - NOTE: There are many ways we could detrend.  We're using spline as a default.
+  dat.detrend <- dplR::detrend(dat.rwl, method="Spline")
+  
+  # Turn things into a chronology
+  dat.chron <- dplR::chron(dat.detrend)
+  png(file.path(path.rwl, paste0(PLT, "_chronology.png")), height=6, width=8, units="in", res=120)
+  dplR::plot.crn(dat.chron, crn.lwd=2, crn.line.col="red2")
+  dev.off()
+  
+  # Do an SEA
+  sea.out <- dplR::sea(dat.chron, yrs.drought)
+  sea.out$PlotID <- PLT
+  
+  sea.all <- rbind(sea.all, sea.out)
 }
-summary(drought.resp)
+sea.all$PlotID <- as.factor(sea.all$PlotID)
+summary(sea.all)
 
-write.csv(drought.resp, file.path(path.google, "data/Drought_Response", "DroughtResp_LME_out.csv"), row.names=F)  
 
-
-ggplot(data=drought.resp) +
+png(file.path(path.google, "figures/Drought_Response", "Drought_Effect_SEA_StatSig.png"), height=8, width=10, units="in", res=120)
+ggplot(data=sea.all) +
   facet_wrap(~PlotID) +
-  geom_bar(data=drought.resp[drought.resp$p.val>=0.001,], aes(x=as.factor(drought.lag), y=estimate), stat="identity", fill="gray50") +
-  # geom_vline(xintercept=as.factor(0), color="red") +
-  geom_bar(data=drought.resp[drought.resp$p.val<0.001,], aes(x=as.factor(drought.lag), y=estimate), stat="identity", fill="black") +
-  geom_bar(data=drought.resp[drought.resp$p.val<0.001 & drought.resp$drought.lag==0,], aes(x=as.factor(drought.lag), y=estimate), stat="identity", fill="red") +
-  geom_bar(data=drought.resp[drought.resp$p.val>=0.001 & drought.resp$drought.lag==0,], aes(x=as.factor(drought.lag), y=estimate), stat="identity", fill="red", alpha=0.5) +
-  theme_bw()
-
-dat.all <- merge(dat.all, drought.resp, all.x=T)
-dat.all$sig[!is.na(dat.all$p.val)] <- ifelse(dat.all$p.val[!is.na(dat.all$p.val)]<0.01, "sig", "n.s.")
-dat.all$sig <- as.factor(dat.all$sig)
-summary(dat.all)
-
-png(file.path(path.google, "figures/Drought_Response", "Drought_Effect_LME_StatSig.png"), height=8, width=10, units="in", res=120)
-ggplot(data=dat.all[!is.na(dat.all$drought.lag),]) +
-  facet_wrap(~PlotID, scales="free") +
-  geom_boxplot(aes(x=as.factor(drought.lag), y=RWI.rel, fill=sig)) +
-  geom_hline(yintercept=0, linetype="solid", color="blue") +
-  scale_fill_manual(values=c("gray50", "red2")) +
+  geom_bar(data=sea.all[sea.all$p>=0.05,], aes(x=as.factor(lag), y=se, fill="n.s."), stat="identity") +
+  geom_bar(data=sea.all[sea.all$p<0.05,], aes(x=as.factor(lag), y=se, fill="sig"), stat="identity") +
+  scale_fill_manual(name="", values=c("gray50", "red2")) +
   scale_x_discrete(name="Drought Lag") +
-  scale_y_continuous(name="RWI difference") +
+  scale_y_continuous(name="Drought Effect") +
   theme_bw() +
   theme(legend.position = "top")
 dev.off()
+
+write.csv(sea.all, file.path(path.google, "data/Drought_Response", "DroughtResp_SEA_out.csv"), row.names=F)  
 # ---------------------------------------
