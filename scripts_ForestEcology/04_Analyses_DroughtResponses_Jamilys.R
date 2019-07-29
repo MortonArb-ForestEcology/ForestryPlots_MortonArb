@@ -1,3 +1,5 @@
+library(ggplot2)
+path.out <- "/Volumes/GoogleDrive/My Drive/Forestry Plots/Rollinson_2019_REU_ForestryPlots/figures/Drought_Response/"
 
 # ---------------------------------------
 # 1. Compile drought data
@@ -66,6 +68,12 @@ summary(pdsi.ncdc)
 drought.merge <- merge(pdsi.ncdc[,c("year", "month", "pdsi.ncdc")], wrcc.drought[,c("year", "month", "pdsi.wrcc", "spei.wrcc")], all=F)
 summary(drought.merge)
 
+drought.all <- stack(drought.merge[,c("pdsi.ncdc", "pdsi.wrcc", "spei.wrcc")])
+drought.all[,c("year", "month")] <- drought.merge[,c("year", "month")]
+drought.all$index <- ifelse(substr(drought.all$ind, 1, 4)=="pdsi", "pdsi", "spei")
+drought.all$source <- ifelse(stringr::str_sub(drought.all$ind, -4, -1)=="ncdc", "ncdc", "wrcc")
+summary(drought.all)
+
 drought.mean <- aggregate(drought.merge[drought.merge$month %in% c("06", "07", "08"),c("pdsi.ncdc", "pdsi.wrcc", "spei.wrcc"),],
                          by=list(drought.merge[drought.merge$month %in% c("06", "07", "08"),c("year"),]),
                          FUN=mean)
@@ -78,16 +86,61 @@ drought.mean[drought.mean$pdsi.ncdc<=-3,]
 drought.mean[drought.mean$pdsi.wrcc<=-3,]
 drought.mean[drought.mean$spei.wrcc<=-1,]
 
-drought.max <- aggregate(drought.merge[drought.merge$month %in% c("06", "07", "08"),c("pdsi.ncdc", "pdsi.wrcc", "spei.wrcc"),],
+drought.min <- aggregate(drought.merge[drought.merge$month %in% c("06", "07", "08"),c("pdsi.ncdc", "pdsi.wrcc", "spei.wrcc"),],
                           by=list(drought.merge[drought.merge$month %in% c("06", "07", "08"),c("year"),]),
-                          FUN=max)
-names(drought.max)[1] <- c("year")
-drought.max$type <- as.factor("summer.max")
-summary(drought.max)
+                          FUN=min)
+names(drought.min)[1] <- c("year")
+drought.min$type <- as.factor("summer.min")
+summary(drought.min)
 
-plot(pdsi.ncdc ~ pdsi.wrcc, data=drought.max)
-drought.max[drought.max$pdsi.ncdc<=-3,]
-drought.max[drought.max$pdsi.wrcc<=-3,]
-drought.max[drought.max$spei.wrcc<=-1,]
+plot(pdsi.ncdc ~ pdsi.wrcc, data=drought.min)
+drought.min[drought.min$pdsi.ncdc<=-3,]
+drought.min[drought.min$pdsi.wrcc<=-3,]
+# drought.min[drought.min$spei.wrcc<=-1,]
+
+# Extreme Dry: <= -4.00
+# Severe Dry: -3.99 to -3.00
+# Mod. Dry: -2.99 to -2.00
+# Mid-Range: -1.99 to 1.99
+# Mod. Moist: 2.00 to 2.99
+# Very Moist: 3.00 to 3.99
+# Extreme Moist: >= 4.00
+
+drought.summary <- rbind(drought.mean, drought.min)
+# drought.summary$class.ncdc <- ifelse(drought.summary$pdsi.ncdc<=-4, "extreme dry", 
+#                                      ifelse(drought.summary$pdsi.ncdc<=-3, "severe dry",
+#                                             ifelse(drought.summary$pdsi.ncdc<=-2, "dry", 
+#                                                    ifelse(drought.summary$pdsi.ncdc<2, "mid-range", 
+#                                                           ifelse(drought.summary, "")))))
+
+ggplot(data=drought.summary) +
+  facet_wrap(~type) +
+  geom_bar(aes(x=year, y=pdsi.ncdc, color=pdsi.ncdc), stat='identity') +
+  scale_color_gradient2(low="red2", high="blue2", mid="gray50", midpoint=0)
+
+png(file.path(path.out, "TimeSeries_PDSI_NCDC_MeanMin.png"), height=8, width=10, units="in", res=120)
+ggplot(data=drought.summary) +
+  facet_grid(type~.) +
+  geom_bar(aes(x=year, y=pdsi.ncdc, fill=pdsi.ncdc), stat='identity') +
+  scale_fill_gradientn(name="PDSI", colors=c("#d7191c", "#fdae61", "#ffffbf", "#abd9e9", "#2c7bb6"), limits=max(abs(drought.summary$pdsi.ncdc))*c(-1,1)) +
+  scale_x_continuous(expand=c(0,0)) +
+  scale_y_continuous(name="Drought (PDSI)") +
+  theme(legend.position = "top",
+        panel.background = element_rect(color="black", fill="black"),
+        panel.grid = element_blank())
+dev.off()
+
+png(file.path(path.out, "TimeSeries_SPEI_WRCC_MeanMin.png"), height=6, width=10, units="in", res=120)
+ggplot(data=drought.summary[drought.summary$type=="summer.mean",]) +
+  facet_grid(type~.) +
+  geom_bar(aes(x=year, y=spei.wrcc, fill=spei.wrcc), stat='identity') +
+  scale_fill_gradientn(name="SPEI", colors=c("#d7191c", "#fdae61", "#ffffbf", "#abd9e9", "#2c7bb6"), limits=max(abs(drought.summary$spei.wrcc))*c(-1,1)) +
+  scale_x_continuous(expand=c(0,0)) +
+  scale_y_continuous(name="Drought (SPEI)") +
+  theme(legend.position = "top",
+        panel.background = element_rect(color="black", fill="black"),
+        panel.grid = element_blank())
+dev.off()
+
 # -----------------
 # ---------------------------------------
