@@ -27,7 +27,7 @@ summary(dat.daymet)
 
 # Doing a 7-day smoothing of the met data; anchored on the date so that it's a cumulative effect
 # vars.pred <- c("prcp.mm", "tmax.C", "tmin.C", "vp.Pa", "srad.Wm2")
-vars.pred <- c("prcp.mm", "tmax.C", "vp.Pa")
+vars.pred <- c("prcp.mm", "tmax.C")
 for(i in 1:length(vars.pred)){
   dat.daymet[,paste0(vars.pred[i], ".wk")] <- zoo::rollapply(dat.daymet[,vars.pred[i]], width=7, align="right", FUN=mean, fill=NA)
   
@@ -101,7 +101,8 @@ for(plt in unique(dat.all$PlotID)){
         
         # Rather than having true 0 in the response, make it very small
         dat.tmp <- dat.tmp[!is.na(dat.tmp$RESP),]
-        dat.tmp$RESP[dat.tmp$RESP==0] <- 1e-3
+        dat.tmp <- dat.tmp[dat.tmp$RW.cm>0,] # At least for now; drop missing rings
+        # summary(dat.tmp[dat.tmp$RESP<0.01,])
         
         # Run a simple mixed-effect model & save the summary so we can get the t-table
         # mod.var <- nlme::lme(RESP ~ PRED, random=list(TreeID=~1, CoreID=~1), data=dat.tmp[dat.tmp$CoreID!="608012B",], na.action=na.omit)
@@ -124,5 +125,102 @@ summary(mod.out)
 summary(mod.out[mod.out$PlotID=="QUBI-W",])
 summary(mod.out[!is.na(mod.out$p.val),])
 write.csv(mod.out, file.path(path.google, "data/CriticalPeriods", "ClimateCorrs_Daily.csv"), row.names=F)  
+# ----------------------------------
+
+# ----------------------------------
+# Plotting and exploring the output
+# ----------------------------------
+mod.out <- read.csv(file.path(path.google, "data/CriticalPeriods", "ClimateCorrs_Daily.csv"))
+summary(mod.out)
+
+yrs.mark <- data.frame(Label=c("p.Oct 1", "Jan 1", "Apr 1", "Jul 1", "Oct 1"), 
+                       Date=c("2018-10-01", "2019-01-01", "2019-04-01", "2019-07-01", "2019-10-01"))
+yrs.mark$mark.yday <- lubridate::yday(yrs.mark$Date)
+yrs.mark$mark.yday[1] <- yrs.mark$mark.yday[1]-365
+
+PRGn5 <- c("#7b3294", "#c2a5cf", "gray50", "#a6dba0", "#008837")
+
+png(file.path(path.google, "figures/CriticalPeriods", "ClimateCorr_Daily_Smoothed7_t-stat.png"), height=10, width=8, units="in", res=120)
+ggplot(data=mod.out) +
+  facet_grid(pred~., scales="free") +
+  ggtitle("Daily Climate Corr.: Sig. T-stat; RWI") +
+  geom_tile(data=mod.out[mod.out$p.val>=0.05,], aes(x=yday, y=PlotID), fill="gray50") +
+  geom_tile(data=mod.out[mod.out$p.val<0.05,], aes(x=yday, y=PlotID, fill=t.stat)) +
+  # geom_tile(aes(x=yday, y=resp, fill=t.stat)) +
+  geom_vline(xintercept = 0, linetype="dashed") +
+  scale_y_discrete(name="Forestry Plot", expand=c(0,0)) +
+  scale_x_continuous(name="Day of Year", expand=c(0,0), breaks=yrs.mark$mark.yday, labels = yrs.mark$Label) +
+  scale_fill_gradientn(name="t-stat", colors=PRGn5, limits=max(mod.out$t.stat)*c(-1,1))+
+  theme(legend.position="top")
+dev.off()
+
+png(file.path(path.google, "figures/CriticalPeriods", "ClimateCorr_Daily_Smoothed7_t-stat_alpha0.01.png"), height=10, width=8, units="in", res=120)
+ggplot(data=mod.out) +
+  facet_grid(pred~., scales="free") +
+  ggtitle("Daily Climate Corr.: Sig. T-stat; RWI") +
+  geom_tile(data=mod.out[mod.out$p.val>=0.01,], aes(x=yday, y=PlotID), fill="gray50") +
+  geom_tile(data=mod.out[mod.out$p.val<0.01,], aes(x=yday, y=PlotID, fill=t.stat)) +
+  # geom_tile(aes(x=yday, y=resp, fill=t.stat)) +
+  geom_vline(xintercept = 0, linetype="dashed") +
+  scale_y_discrete(name="Forestry Plot", expand=c(0,0)) +
+  scale_x_continuous(name="Day of Year", expand=c(0,0), breaks=yrs.mark$mark.yday, labels = yrs.mark$Label) +
+  scale_fill_gradientn(name="t-stat", colors=PRGn5, limits=max(mod.out$t.stat)*c(-1,1))+
+  theme(legend.position="top")
+dev.off()
+
+png(file.path(path.google, "figures/CriticalPeriods", "ClimateCorr_Daily_Smoothed7_t-stat_alpha0.01_byPlot.png"), height=10, width=8, units="in", res=120)
+ggplot(data=mod.out) +
+  facet_grid(PlotID~., scales="free") +
+  ggtitle("Daily Climate Corr.: Sig. T-stat; RWI") +
+  geom_tile(data=mod.out[mod.out$p.val>=0.01,], aes(x=yday, y=pred), fill="gray50") +
+  geom_tile(data=mod.out[mod.out$p.val<0.01,], aes(x=yday, y=pred, fill=t.stat)) +
+  # geom_tile(aes(x=yday, y=resp, fill=t.stat)) +
+  geom_vline(xintercept = 0, linetype="dashed") +
+  scale_y_discrete(name="Forestry Plot", expand=c(0,0)) +
+  scale_x_continuous(name="Day of Year", expand=c(0,0), breaks=yrs.mark$mark.yday, labels = yrs.mark$Label) +
+  scale_fill_gradientn(name="t-stat", colors=PRGn5, limits=max(mod.out$t.stat)*c(-1,1))+
+  theme(legend.position="top")
+dev.off()
+
+png(file.path(path.google, "figures/CriticalPeriods", "ClimateCorr_Daily_Smoothed7_t-stat_alpha0.05_byPlot.png"), height=10, width=8, units="in", res=120)
+ggplot(data=mod.out) +
+  facet_grid(PlotID~., scales="free") +
+  ggtitle("Daily Climate Corr.: Sig. T-stat; RWI") +
+  geom_tile(data=mod.out[mod.out$p.val>=0.05,], aes(x=yday, y=pred), fill="gray50") +
+  geom_tile(data=mod.out[mod.out$p.val<0.05,], aes(x=yday, y=pred, fill=t.stat)) +
+  # geom_tile(aes(x=yday, y=resp, fill=t.stat)) +
+  geom_vline(xintercept = 0, linetype="dashed") +
+  scale_y_discrete(name="Forestry Plot", expand=c(0,0)) +
+  scale_x_continuous(name="Day of Year", expand=c(0,0), breaks=yrs.mark$mark.yday, labels = yrs.mark$Label) +
+  scale_fill_gradientn(name="t-stat", colors=PRGn5, limits=max(mod.out$t.stat)*c(-1,1))+
+  theme(legend.position="top")
+dev.off()
+
+
+
+
+png(file.path(path.google, "figures/CriticalPeriods", "ClimateCorr_Daily_Smoothed7_r-val.png"), height=10, width=8, units="in", res=120)
+ggplot(data=mod.out) +
+  facet_grid(pred~., scales="free") +
+  ggtitle("Daily Climate Corr.: r-value; RWI") +
+  geom_tile(aes(x=yday, y=PlotID, fill=sqrt(r.sq.m)*sign(t.stat))) +
+  geom_vline(xintercept = 0, linetype="dashed") +
+  scale_y_discrete(name="Forestry Plot", expand=c(0,0)) +
+  scale_x_continuous(name="Day of Year", expand=c(0,0), breaks=yrs.mark$mark.yday, labels = yrs.mark$Label) +
+  scale_fill_gradientn(name="Marginal\nR-value", colors=PRGn5, limits=max(sqrt(mod.out$r.sq.m))*c(-1,1))+
+  theme(legend.position="top")
+dev.off()
+
+png(file.path(path.google, "figures/CriticalPeriods", "ClimateCorr_Daily_Smoothed7_r-val_byPlot.png"), height=10, width=8, units="in", res=120)
+ggplot(data=mod.out) +
+  facet_grid(PlotID~., scales="free") +
+  ggtitle("Daily Climate Corr.: r-value; RWI") +
+  geom_tile(aes(x=yday, y=pred, fill=sqrt(r.sq.m)*sign(t.stat))) +
+  geom_vline(xintercept = 0, linetype="dashed") +
+  scale_y_discrete(name="Forestry Plot", expand=c(0,0)) +
+  scale_x_continuous(name="Day of Year", expand=c(0,0), breaks=yrs.mark$mark.yday, labels = yrs.mark$Label) +
+  scale_fill_gradientn(name="Marginal\nR-value", colors=PRGn5, limits=max(sqrt(mod.out$r.sq.m))*c(-1,1))+
+  theme(legend.position="top")
+dev.off()
 
 # ----------------------------------
