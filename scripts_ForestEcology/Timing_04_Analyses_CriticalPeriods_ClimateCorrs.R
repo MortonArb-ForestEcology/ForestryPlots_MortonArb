@@ -12,12 +12,13 @@ dat.tr <- dat.tr[dat.tr$year<2019,]
 summary(dat.tr)
 
 # Find valid DBH reconstructions
-dat.tree <- aggregate(dat.tr[,c("RW.cm", "DBH.cm", "RWI")],
-                      by=dat.tr[,c("PlotID", "TreeID", "CoreID")],
+dat.tree <- aggregate(dat.tr[,c("RW.mm", "DBH.cm", "RWI")],
+                      by=dat.tr[,c("PlotID", "TreeID", "CoreID", "Crossdated")],
                       FUN=function(x){length(which(!is.na(x)))})
 summary(dat.tree)
 dat.tree[dat.tree$DBH.cm<10,]
 hist(dat.tree$DBH.cm)
+summary(dat.tr[dat.tr$DBH.cm>=80,])
 
 # --------------
 # Bring in Daymet & do some stuff
@@ -27,7 +28,7 @@ summary(dat.daymet)
 
 # Doing a 7-day smoothing of the met data; anchored on the date so that it's a cumulative effect
 # vars.pred <- c("prcp.mm", "tmax.C", "tmin.C", "vp.Pa", "srad.Wm2")
-vars.pred <- c("prcp.mm", "tmax.C")
+vars.pred <- c("prcp.mm", "tmax.C", "vp.Pa", "srad.Wm2")
 for(i in 1:length(vars.pred)){
   dat.daymet[,paste0(vars.pred[i], ".wk")] <- zoo::rollapply(dat.daymet[,vars.pred[i]], width=7, align="right", FUN=mean, fill=NA)
   
@@ -46,7 +47,7 @@ summary(dat.daymet)
 # --------------
 
 # Bring the met data & ring data together
-dat.all <- merge(dat.tr[!is.na(dat.tr$RW.cm),], dat.daymet[,4:ncol(dat.daymet)], all.x=F)
+dat.all <- merge(dat.tr[!is.na(dat.tr$RW.mm),], dat.daymet[,4:ncol(dat.daymet)], all.x=F)
 summary(dat.all)
 # ----------------------------------
 
@@ -56,8 +57,8 @@ summary(dat.all)
 # ----------------------------------
 plt.use <- unique(dat.all$PlotID)
 days.use <- min(dat.all$yday):max(dat.all$yday)
-# vars.resp <- c("BAI.cm2", "RWI")
-vars.resp="RWI"
+vars.resp <- c("BAI.cm2", "RWI")
+# vars.resp="RWI"
 mod.out <- data.frame(yday=rep(days.use), 
                       PlotID=rep(rep(plt.use, each=length(days.use)), length.out=length(days.use)*length(plt.use)*length(vars.resp)*length(vars.pred)),
                       resp=rep(rep(vars.resp, each=length(days.use)*length(plt.use)), length.out=length(days.use)*length(plt.use)*length(vars.resp)*length(vars.pred)),
@@ -101,14 +102,14 @@ for(plt in unique(dat.all$PlotID)){
         
         # Rather than having true 0 in the response, make it very small
         dat.tmp <- dat.tmp[!is.na(dat.tmp$RESP),]
-        dat.tmp <- dat.tmp[dat.tmp$RW.cm>0,] # At least for now; drop missing rings
+        dat.tmp <- dat.tmp[dat.tmp$RW.mm>0,] # At least for now; drop missing rings
         # summary(dat.tmp[dat.tmp$RESP<0.01,])
         
         # Run a simple mixed-effect model & save the summary so we can get the t-table
         # mod.var <- nlme::lme(RESP ~ PRED, random=list(TreeID=~1, CoreID=~1), data=dat.tmp[dat.tmp$CoreID!="608012B",], na.action=na.omit)
         
         # system.time(
-        mod.var <- nlme::lme(RESP ~ PRED, random=list(year=~1, TreeID=~1, CoreID=~1), data=dat.tmp[!is.na(dat.tmp$RESP),], na.action=na.omit)
+        mod.var <- nlme::lme(RESP ~ PRED, random=list(year=~1, TreeID=~1, CoreID=~1), data=dat.tmp[!is.na(dat.tmp$RESP) & !is.na(dat.tmp$Crossdated) & dat.tmp$Crossdated=="Y",], na.action=na.omit)
         # )
         mod.sum <- summary(mod.var)
         
