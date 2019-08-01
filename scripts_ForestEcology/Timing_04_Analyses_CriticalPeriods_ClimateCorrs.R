@@ -57,7 +57,7 @@ summary(dat.all)
 # ----------------------------------
 plt.use <- unique(dat.all$PlotID)
 days.use <- min(dat.all$yday):max(dat.all$yday)
-vars.resp <- c("BAI.cm2", "RWI")
+vars.resp <- c("RWI")
 # vars.resp="RWI"
 mod.out <- data.frame(yday=rep(days.use), 
                       PlotID=rep(rep(plt.use, each=length(days.use)), length.out=length(days.use)*length(plt.use)*length(vars.resp)*length(vars.pred)),
@@ -81,15 +81,21 @@ pb <- txtProgressBar(min=0, max=nrow(mod.out), style = 3)
 pb.ind <- 1
 for(plt in unique(dat.all$PlotID)){
   for(i in days.use){
-    dat.tmp <- dat.all[dat.all$PlotID==plt & dat.all$yday==i,]
+    # Subset to just crossdated samples
+    dat.tmp <- dat.all[dat.all$PlotID==plt & dat.all$yday==i & !is.na(dat.all$Crossdated) & dat.all$Crossdated=="Y",]
+    if(nrow(dat.tmp)==0){
+      warning(paste("No Crossdated Cores in", plt, "-- Skipping for now"))
+      next
+    }
+    
     for(VAR in vars.pred){
       # dat.tmp$PRED <- dat.tmp[,VAR]
       dat.tmp$PRED <- dat.tmp[,paste0(VAR, ".wk")]
       dat.tmp <- dat.tmp[!is.na(dat.tmp$PRED),]
-      # if(VAR=="prcp.mm"){
-      # dat.tmp$PRED[dat.tmp$PRED==0] <- 1e-3
-      # dat.tmp$PRED <- log(dat.tmp$PRED)
-      # } 
+      if(VAR=="prcp.mm"){
+        dat.tmp$PRED[dat.tmp$PRED<=1e-6] <- 1e-6
+        dat.tmp$PRED <- log(dat.tmp$PRED)
+      }
       
       
       for(RESP in vars.resp){
@@ -109,7 +115,7 @@ for(plt in unique(dat.all$PlotID)){
         # mod.var <- nlme::lme(RESP ~ PRED, random=list(TreeID=~1, CoreID=~1), data=dat.tmp[dat.tmp$CoreID!="608012B",], na.action=na.omit)
         
         # system.time(
-        mod.var <- nlme::lme(RESP ~ PRED, random=list(year=~1, TreeID=~1, CoreID=~1), data=dat.tmp[!is.na(dat.tmp$RESP) & !is.na(dat.tmp$Crossdated) & dat.tmp$Crossdated=="Y",], na.action=na.omit)
+        mod.var <- nlme::lme(RESP ~ PRED, random=list(TreeID=~1, CoreID=~1, year=~1), data=dat.tmp[!is.na(dat.tmp$RESP),], na.action=na.omit)
         # )
         mod.sum <- summary(mod.var)
         
