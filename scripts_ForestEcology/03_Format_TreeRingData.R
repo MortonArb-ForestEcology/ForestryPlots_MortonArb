@@ -34,6 +34,24 @@ dat.tree$TreeID2 <- as.factor(paste(dat.tree$SubPlot, dat.tree$TreeID, sep=""))
 dat.tree <- dat.tree[!is.na(dat.tree$ForestryPlot),]
 summary(dat.tree)
 
+# bring in the core metadata
+dat.core <- data.frame(googlesheets::gs_read(dat.proj, ws="Core Metadata"))
+names(dat.core) <- c("CoreID", "ForestryPlot", "SubPlot", "TreeID", "Date.Cored", "Crossdated", "Pith.Present", "Pith.Date", "Ring.First", "Ring.Last", "Bark.Present", "Rings.Missing", "Notes")
+dat.core$CoreID <- as.factor(dat.core$CoreID)
+dat.core$ForestryPlot <- as.factor(dat.core$ForestryPlot)
+dat.core$SubPlot <- as.factor(dat.core$SubPlot)
+dat.core$TreeID <- as.factor(stringr::str_pad(dat.core$TreeID, 3, "left", "0"))
+dat.core$Crossdated <- as.factor(dat.core$Crossdated)
+dat.core$Pith.Present <- as.factor(dat.core$Pith.Present)
+dat.core$Bark.Present <- as.factor(dat.core$Bark.Present)
+dat.core$Ring.Last <- car::recode(dat.core$Ring.Last, "'2018 (partial 19)'='2019'")
+summary(dat.core)
+
+# Making columns line up with titles in other sheets
+dat.core$TreeID2 <- as.factor(paste(dat.core$SubPlot, dat.core$TreeID, sep=""))
+dat.core$CoreID <- as.factor(paste(dat.core$TreeID2, dat.core$CoreID, sep=""))
+summary(dat.core)
+
 # File path to where the raw tree-ring data is stored
 path.rwl <- "/Volumes/GoogleDrive/My Drive/Forestry Plots/Rollinson_2019_REU_ForestryPlots/data/RingsWidths_Raw/crossdated/"
 
@@ -140,7 +158,7 @@ for(plt in 1:length(files.rwl)){
   # 2. Putting everything into a "long" format data frame
   # -----------  
   dat.df <- stack(dat.rwl)
-  names(dat.df) <- c("RW.cm", "CoreID")
+  names(dat.df) <- c("RW.mm", "CoreID")
   dat.df$year <- as.numeric(row.names(dat.rwl))
   dat.df$PlotID <- as.factor(PLT)
   dat.df$RWI <- stack(dat.detrend)[,1]
@@ -148,8 +166,8 @@ for(plt in 1:length(files.rwl)){
   dat.df$BA.cm2 <- stack(dat.ba)[,1]
   dat.df$BAI.cm2 <- stack(dat.bai)[,1]
   
-  # Re-ordering to make Christy happy
-  dat.df <- dat.df[,c("PlotID", "CoreID", "year", "RW.cm", "RWI", "DBH.cm", "BA.cm2", "BAI.cm2")]
+  # Re-ordering to make Christy happy 
+  dat.df <- dat.df[,c("PlotID", "CoreID", "year", "RW.mm", "RWI", "DBH.cm", "BA.cm2", "BAI.cm2")]
   # summary(dat.df)
   
   # Add our new plot into the dat.all data frame where everything will be stored
@@ -161,6 +179,16 @@ for(plt in 1:length(files.rwl)){
   
 }
 summary(dat.all)
+
+summary(dat.core)
+dat.all2 <- merge(dat.all, dat.core[,c("CoreID", "Date.Cored", "Crossdated")], all.x=T)
+summary(dat.all)
+summary(dat.all2)
+summary(dat.all2[is.na(dat.all2$Crossdated),])
+
+unique(dat.all2[is.na(dat.all2$Crossdated),"PlotID"])
+summary(dat.all2[is.na(dat.all2$Crossdated) & dat.all$PlotID=="PIST-W",])
+
 
 # "/Volumes/GoogleDrive/My Drive/Forestry Plots/Rollinson_2019_REU_ForestryPlots/data/RingsWidths_Raw/crossdated/"
 write.csv(dat.all, file.path(path.rwl, "../..", "Data_TreeRings_compiled_all.csv"), row.names=F)
