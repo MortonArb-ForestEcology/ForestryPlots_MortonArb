@@ -155,7 +155,22 @@ dev.off()
 dat.tr <- read.csv(file.path(path.google, "data", "Data_TreeRings_compiled_all.csv"))
 dat.tr$TreeID <- as.factor(substr(dat.tr$CoreID, 1, 6))
 dat.tr <- dat.tr[dat.tr$year<2019,] # Exclude our incomplete year
+dat.tr <- dat.tr[!is.na(dat.tr$Crossdated) & dat.tr$Crossdated=="Y",]
 summary(dat.tr)
+
+dat.tr$Wood <- NA # Trachied, Ring, Diffuse
+dat.tr[dat.tr$PlotID %in% c("PLOC-W", "AEGL-E"), "Wood"] <- c("diffuse")
+dat.tr[dat.tr$PlotID %in% c("ASTR-W", "ASTR-E", "CAOV-E", "QUAL-E", "QUBI-W", "ROPS-W"), "Wood"] <- c("ring")
+dat.tr[is.na(dat.tr$Wood), "Wood"] <- "tracheid"
+dat.tr$Wood <- as.factor(dat.tr$Wood)
+summary(dat.tr)
+
+dat.tr$Myco <- NA # AM/EM Mycorrhizal type
+dat.tr[dat.tr$PlotID %in% c("AEGL-E", "PLOC-W", "ASTR-W", "ASTR-E", "ROPS-W", "CHPI-E", "JUCH-W", "THOC-W1", "THOC-W2"), "Myco"] <- c("AM")
+dat.tr[is.na(dat.tr$Myco), "Myco"] <- "EM"
+dat.tr$Myco <- as.factor(dat.tr$Myco)
+summary(dat.tr)
+
 
 # Just roll with the mean summer drought status right now
 dat.all <- merge(dat.tr, drought.min, all.x=T)
@@ -199,6 +214,38 @@ ggplot(data=dat.all[!is.na(dat.all$drought.lag),]) +
   theme_bw()
 dev.off()
 
+png(file.path(path.google, "figures/Drought_Response", "Exploratory_Drought_RWI_byWood_byMyco.png"), height=8, width=10, units="in", res=120)
+ggplot(data=dat.all[!is.na(dat.all$RWI),]) +
+  facet_grid(Myco~Wood, scales="free") +
+  geom_point(aes(x=pdsi.ncdc, y=RWI), size=0.5, color="gray50") +
+  stat_smooth(aes(x=pdsi.ncdc, y=RWI), method="lm", color="blue", fill="blue", alpha=0.5) +
+  geom_hline(yintercept=1, linetype="dashed", color="black") +
+  theme_bw()
+dev.off()
+
+# ---------------------------------------
+# Evaluating overall drought sensitivity
+# ---------------------------------------
+# Plot-by-plot approach
+# lm(RWI ~ pdsi.ncdc)
+
+mod.drt.plot <- nlme::lme(RWI ~ pdsi.ncdc*PlotID-1 - pdsi.ncdc, random=list(year=~1, TreeID=~1, CoreID=~1), data=dat.all[!is.na(dat.all$RWI), ], na.action=na.omit)
+summary(mod.drt.plot)
+anova(mod.drt.plot)
+
+mod.drt.plot.comp <- nlme::lme(RWI ~ pdsi.ncdc*PlotID, random=list(year=~1, TreeID=~1, CoreID=~1), data=dat.all[!is.na(dat.all$RWI), ], na.action=na.omit)
+summary(mod.drt.plot.comp)
+anova(mod.drt.plot.comp)
+
+
+mod.drt.wood <- nlme::lme(RWI ~ pdsi.ncdc*relevel(Wood, "ring") , random=list(PlotID=~1, TreeID=~1, CoreID=~1, year=~1), data=dat.all[!is.na(dat.all$RWI), ], na.action=na.omit)
+summary(mod.drt.wood)
+anova(mod.drt.wood)
+
+mod.drt.myco <- nlme::lme(RWI ~ pdsi.ncdc*Myco, random=list(PlotID=~1, TreeID=~1, CoreID=~1, year=~1), data=dat.all[!is.na(dat.all$RWI), ], na.action=na.omit)
+summary(mod.drt.myco)
+anova(mod.drt.myco)
+# ---------------------------------------
 
 dat.all$RWI.cent <- dat.all$RWI-1
 
@@ -222,7 +269,7 @@ drought.resp <- data.frame(drought.lag=rep(-5:5),
                            p.val=NA)
 
 for(PLT in unique(dat.all$PlotID)){
-  drought.lag <- nlme::lme(RWI.rel ~ as.factor(drought.lag)-1, random=list(TreeID=~1, CoreID=~1), data=dat.all[dat.all$PlotID==PLT & !is.na(dat.all$drought.lag) & !is.na(dat.all$RWI.rel), ])
+  drought.lag <- nlme::lme(RWI.rel ~ as.factor(drought.lag)-1, random=list(year=~1, TreeID=~1, CoreID=~1), data=dat.all[dat.all$PlotID==PLT & !is.na(dat.all$drought.lag) & !is.na(dat.all$RWI.rel), ])
   mod.sum <- summary(drought.lag)
   # mod.sum$tTable
   
@@ -260,4 +307,11 @@ ggplot(data=dat.all[!is.na(dat.all$drought.lag),]) +
   theme_bw() +
   theme(legend.position = "top")
 dev.off()
+# ---------------------------------------
+
+
+# ---------------------------------------
+# 
+# ---------------------------------------
+
 # ---------------------------------------
