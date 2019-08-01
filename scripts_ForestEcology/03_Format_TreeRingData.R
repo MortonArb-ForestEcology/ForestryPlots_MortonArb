@@ -181,13 +181,12 @@ for(plt in 1:length(files.rwl)){
 summary(dat.all)
 
 summary(dat.core)
-dat.all2 <- merge(dat.all, dat.core[,c("CoreID", "Date.Cored", "Crossdated")], all.x=T)
+dat.all <- merge(dat.all, dat.core[,c("CoreID", "Date.Cored", "Crossdated")], all.x=T)
 summary(dat.all)
-summary(dat.all2)
-summary(dat.all2[is.na(dat.all2$Crossdated),])
 
-unique(dat.all2[is.na(dat.all2$Crossdated),"PlotID"])
-summary(dat.all2[is.na(dat.all2$Crossdated) & dat.all$PlotID=="PIST-W",])
+summary(dat.all[is.na(dat.all$Crossdated),])
+unique(dat.all[is.na(dat.all$Crossdated),"PlotID"])
+summary(dat.all[is.na(dat.all$Crossdated) & dat.all$PlotID=="PIST-W",])
 
 
 # "/Volumes/GoogleDrive/My Drive/Forestry Plots/Rollinson_2019_REU_ForestryPlots/data/RingsWidths_Raw/crossdated/"
