@@ -47,6 +47,8 @@ dat.core$Bark.Present <- as.factor(dat.core$Bark.Present)
 dat.core$Ring.Last <- car::recode(dat.core$Ring.Last, "'2018 (partial 19)'='2019'")
 summary(dat.core)
 
+summary(dat.core[dat.core$ForestryPlot=="JUCH-W",])
+
 # Making columns line up with titles in other sheets
 dat.core$TreeID2 <- as.factor(paste(dat.core$SubPlot, dat.core$TreeID, sep=""))
 dat.core$CoreID <- as.factor(paste(dat.core$TreeID2, dat.core$CoreID, sep=""))
@@ -186,7 +188,7 @@ summary(dat.all)
 
 summary(dat.all[is.na(dat.all$Crossdated),])
 unique(dat.all[is.na(dat.all$Crossdated),"PlotID"])
-summary(dat.all[is.na(dat.all$Crossdated) & dat.all$PlotID=="PIST-W",])
+summary(dat.all[dat.all$PlotID=="JUCH-W",])
 
 
 # "/Volumes/GoogleDrive/My Drive/Forestry Plots/Rollinson_2019_REU_ForestryPlots/data/RingsWidths_Raw/crossdated/"
