@@ -28,7 +28,7 @@ summary(dat.daymet)
 
 # Doing a 7-day smoothing of the met data; anchored on the date so that it's a cumulative effect
 # vars.pred <- c("prcp.mm", "tmax.C", "tmin.C", "vp.Pa", "srad.Wm2")
-vars.pred <- c("prcp.mm", "tmax.C", "vp.Pa", "srad.Wm2")
+vars.pred <- c("prcp.mm", "tmax.C")
 for(i in 1:length(vars.pred)){
   dat.daymet[,paste0(vars.pred[i], ".wk")] <- zoo::rollapply(dat.daymet[,vars.pred[i]], width=7, align="right", FUN=mean, fill=NA)
   
@@ -103,13 +103,21 @@ for(plt in unique(dat.all$PlotID)){
         setTxtProgressBar(pb, pb.ind)
         pb.ind = pb.ind+1
         
+        out.ind <- which(mod.out$PlotID==plt & mod.out$pred==VAR & mod.out$yday==i & mod.out$resp==RESP)
+
+        if(!is.na(mod.out[out.ind, "t.stat"])) next
+        
         # Set up the response variable for our model to make it generalzied
         dat.tmp$RESP <- dat.tmp[,RESP]
         
         # Rather than having true 0 in the response, make it very small
         dat.tmp <- dat.tmp[!is.na(dat.tmp$RESP),]
-        dat.tmp <- dat.tmp[dat.tmp$RW.mm>0,] # At least for now; drop missing rings
+        # dat.tmp <- dat.tmp[dat.tmp$RWI>=0.1,] # At least for now; drop missing/VERY tiny rings
         # summary(dat.tmp[dat.tmp$RESP<0.01,])
+        if(RESP=="RWI"){
+    	    dat.tmp$RESP <- log(dat.tmp$RESP)
+        }
+
         
         # Run a simple mixed-effect model & save the summary so we can get the t-table
         # mod.var <- nlme::lme(RESP ~ PRED, random=list(TreeID=~1, CoreID=~1), data=dat.tmp[dat.tmp$CoreID!="608012B",], na.action=na.omit)
@@ -120,7 +128,6 @@ for(plt in unique(dat.all$PlotID)){
         mod.sum <- summary(mod.var)
         
         # Save our t-stat & pvalue for the climate predictor
-        out.ind <- which(mod.out$PlotID==plt & mod.out$pred==VAR & mod.out$yday==i & mod.out$resp==RESP)
         mod.out[out.ind, "t.stat"] <- mod.sum$tTable["PRED","t-value"]
         mod.out[out.ind, "p.val"] <- mod.sum$tTable["PRED","p-value"]
         mod.out[out.ind, "r.sq.m"] <- MuMIn::r.squaredGLMM(mod.var)[,"R2m"]
