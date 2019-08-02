@@ -116,10 +116,10 @@ drought.summary <- rbind(drought.mean, drought.min)
 #                                                    ifelse(drought.summary$pdsi.ncdc<2, "mid-range", 
 #                                                           ifelse(drought.summary, "")))))
 
-ggplot(data=drought.summary) +
-  facet_wrap(~type) +
-  geom_bar(aes(x=year, y=pdsi.ncdc, color=pdsi.ncdc), stat='identity') +
-  scale_color_gradient2(low="red2", high="blue2", mid="gray50", midpoint=0)
+# ggplot(data=drought.summary) +
+#   facet_wrap(~type) +year=~1, 
+#   geom_bar(aes(x=year, y=pdsi.ncdc, color=pdsi.ncdc), stat='identity') +
+#   scale_color_gradient2(low="red2", high="blue2", mid="gray50", midpoint=0)
 
 png(file.path(path.google, "figures/Drought_Response", "TimeSeries_PDSI_NCDC_MeanMin.png"), height=8, width=10, units="in", res=120)
 ggplot(data=drought.summary) +
@@ -155,7 +155,7 @@ dev.off()
 dat.tr <- read.csv(file.path(path.google, "data", "Data_TreeRings_compiled_all.csv"))
 dat.tr$TreeID <- as.factor(substr(dat.tr$CoreID, 1, 6))
 dat.tr <- dat.tr[dat.tr$year<2019,] # Exclude our incomplete year
-dat.tr <- dat.tr[!is.na(dat.tr$Crossdated) & dat.tr$Crossdated=="Y",]
+dat.tr <- dat.tr[!is.na(dat.tr$Crossdated) & !dat.tr$Crossdated=="N",]
 summary(dat.tr)
 
 dat.tr$Wood <- NA # Trachied, Ring, Diffuse
@@ -176,15 +176,60 @@ summary(dat.tr)
 dat.all <- merge(dat.tr, drought.min, all.x=T)
 summary(dat.all)
 
+# ---------------------------------------
+# Evaluating overall drought sensitivity
+# ---------------------------------------
 
 png(file.path(path.google, "figures/Drought_Response", "Exploratory_Drought_RWI_all.png"), height=8, width=10, units="in", res=120)
-ggplot(data=dat.all[,]) +
+ggplot(data=dat.all[!is.na(dat.all$Crossdated) & dat.all$Crossdated=="Y",]) +
   facet_wrap(~PlotID, scales="free") +
   geom_point(aes(x=pdsi.ncdc, y=RWI), size=0.5, color="gray50") +
   stat_smooth(aes(x=pdsi.ncdc, y=RWI), method="lm", color="blue", fill="blue", alpha=0.5) +
   geom_hline(yintercept=1, linetype="dashed", color="black") +
   theme_bw()
 dev.off()
+
+
+png(file.path(path.google, "figures/Drought_Response", "Exploratory_Drought_RWI_byWood_byMyco.png"), height=8, width=10, units="in", res=120)
+ggplot(data=dat.all[!is.na(dat.all$Crossdated) & dat.all$Crossdated=="Y",]) +
+  facet_grid(Myco~Wood, scales="free") +
+  geom_point(aes(x=pdsi.ncdc, y=RWI), size=0.5, color="gray50") +
+  stat_smooth(aes(x=pdsi.ncdc, y=RWI), method="lm", color="blue", fill="blue", alpha=0.5) +
+  geom_hline(yintercept=1, linetype="dashed", color="black") +
+  theme_bw()
+dev.off()
+
+
+# Plot-by-plot approach
+# lm(RWI ~ pdsi.ncdc)
+
+mod.drt.plot <- nlme::lme(RWI ~ pdsi.ncdc*PlotID-1 - pdsi.ncdc, random=list(year=~1, TreeID=~1, CoreID=~1), data=dat.all[!is.na(dat.all$RWI) & dat.all$Crossdated=="Y", ], na.action=na.omit)
+summary(mod.drt.plot)
+anova(mod.drt.plot)
+
+mod.drt.plot.comp <- nlme::lme(RWI ~ pdsi.ncdc*PlotID, random=list(year=~1, TreeID=~1, CoreID=~1), data=dat.all[!is.na(dat.all$RWI) & dat.all$Crossdated=="Y", ], na.action=na.omit)
+summary(mod.drt.plot.comp)
+anova(mod.drt.plot.comp)
+
+
+mod.drt.wood <- nlme::lme(RWI ~ pdsi.ncdc*relevel(Wood, "ring") - pdsi.ncdc - 1, random=list(PlotID=~1, TreeID=~1, CoreID=~1, year=~1), data=dat.all[!is.na(dat.all$RWI) & dat.all$Crossdated=="Y", ], na.action=na.omit)
+summary(mod.drt.wood)
+anova(mod.drt.wood)
+
+mod.drt.wood.comp <- nlme::lme(RWI ~ pdsi.ncdc*relevel(Wood, "ring") , random=list(PlotID=~1, TreeID=~1, CoreID=~1, year=~1), data=dat.all[!is.na(dat.all$RWI) & dat.all$Crossdated=="Y", ], na.action=na.omit)
+summary(mod.drt.wood.comp)
+anova(mod.drt.wood.comp)
+
+
+mod.drt.myco <- nlme::lme(RWI ~ pdsi.ncdc*Myco - pdsi.ncdc - 1, random=list(PlotID=~1, TreeID=~1, CoreID=~1, year=~1), data=dat.all[!is.na(dat.all$RWI) & dat.all$Crossdated=="Y", ], na.action=na.omit)
+summary(mod.drt.myco)
+anova(mod.drt.myco)
+
+mod.drt.myco.comp <- nlme::lme(RWI ~ pdsi.ncdc*Myco, random=list(PlotID=~1, TreeID=~1, CoreID=~1, year=~1), data=dat.all[!is.na(dat.all$RWI) & dat.all$Crossdated=="Y", ], na.action=na.omit)
+summary(mod.drt.myco.comp)
+anova(mod.drt.myco.comp)
+# ---------------------------------------
+
 
 yrs.drought <- unique(dat.all[dat.all$pdsi.ncdc<=-3, "year"])
 yrs.drought <- yrs.drought[!yrs.drought %in% c(1964, 2006)] # Taking out 1964 because it's on the heels of 1963
@@ -207,45 +252,13 @@ dat.all$drought.lag[dat.all$year %in% yrs.drought] <- 0
 summary(dat.all)
 
 png(file.path(path.google, "figures/Drought_Response", "Exploratory_Drought_lag_RWI_all.png"), height=8, width=10, units="in", res=120)
-ggplot(data=dat.all[!is.na(dat.all$drought.lag),]) +
+ggplot(data=dat.all[!is.na(dat.all$drought.lag) & !is.na(dat.all$Crossdated) & dat.all$Crossdated=="Y",]) +
   facet_wrap(~PlotID, scales="free") +
   geom_boxplot(aes(x=as.factor(drought.lag), y=RWI)) +
   geom_hline(yintercept=1, linetype="solid", color="blue") +
   theme_bw()
 dev.off()
 
-png(file.path(path.google, "figures/Drought_Response", "Exploratory_Drought_RWI_byWood_byMyco.png"), height=8, width=10, units="in", res=120)
-ggplot(data=dat.all[!is.na(dat.all$RWI),]) +
-  facet_grid(Myco~Wood, scales="free") +
-  geom_point(aes(x=pdsi.ncdc, y=RWI), size=0.5, color="gray50") +
-  stat_smooth(aes(x=pdsi.ncdc, y=RWI), method="lm", color="blue", fill="blue", alpha=0.5) +
-  geom_hline(yintercept=1, linetype="dashed", color="black") +
-  theme_bw()
-dev.off()
-
-# ---------------------------------------
-# Evaluating overall drought sensitivity
-# ---------------------------------------
-# Plot-by-plot approach
-# lm(RWI ~ pdsi.ncdc)
-
-mod.drt.plot <- nlme::lme(RWI ~ pdsi.ncdc*PlotID-1 - pdsi.ncdc, random=list(year=~1, TreeID=~1, CoreID=~1), data=dat.all[!is.na(dat.all$RWI), ], na.action=na.omit)
-summary(mod.drt.plot)
-anova(mod.drt.plot)
-
-mod.drt.plot.comp <- nlme::lme(RWI ~ pdsi.ncdc*PlotID, random=list(year=~1, TreeID=~1, CoreID=~1), data=dat.all[!is.na(dat.all$RWI), ], na.action=na.omit)
-summary(mod.drt.plot.comp)
-anova(mod.drt.plot.comp)
-
-
-mod.drt.wood <- nlme::lme(RWI ~ pdsi.ncdc*relevel(Wood, "ring") , random=list(PlotID=~1, TreeID=~1, CoreID=~1, year=~1), data=dat.all[!is.na(dat.all$RWI), ], na.action=na.omit)
-summary(mod.drt.wood)
-anova(mod.drt.wood)
-
-mod.drt.myco <- nlme::lme(RWI ~ pdsi.ncdc*Myco, random=list(PlotID=~1, TreeID=~1, CoreID=~1, year=~1), data=dat.all[!is.na(dat.all$RWI), ], na.action=na.omit)
-summary(mod.drt.myco)
-anova(mod.drt.myco)
-# ---------------------------------------
 
 dat.all$RWI.cent <- dat.all$RWI-1
 
@@ -266,14 +279,25 @@ summary(dat.all)
 drought.resp <- data.frame(drought.lag=rep(-5:5),
                            PlotID=rep(unique(dat.all$PlotID), each=length(-5:5)),
                            estimate=NA,
+                           std.err=NA,
+                           t.stat=NA,
                            p.val=NA)
 
 for(PLT in unique(dat.all$PlotID)){
-  drought.lag <- nlme::lme(RWI.rel ~ as.factor(drought.lag)-1, random=list(year=~1, TreeID=~1, CoreID=~1), data=dat.all[dat.all$PlotID==PLT & !is.na(dat.all$drought.lag) & !is.na(dat.all$RWI.rel), ])
+  dat.tmp <- dat.all[dat.all$PlotID==PLT & !is.na(dat.all$drought.lag) & !is.na(dat.all$RWI.rel) & !is.na(dat.all$Crossdated) & dat.all$Crossdated=="Y", ]
+  
+  if(nrow(dat.tmp)==0){
+  	warning(paste("No Crossdated samples in", PLT, "-- skipping"))
+  	next
+  }
+  
+  drought.lag <- nlme::lme(RWI.rel ~ as.factor(drought.lag)-1, random=list(year=~1, TreeID=~1, CoreID=~1), data=dat.tmp)
   mod.sum <- summary(drought.lag)
   # mod.sum$tTable
   
   drought.resp[drought.resp$PlotID==PLT,"estimate"] <- mod.sum$tTable[,"Value"]
+  drought.resp[drought.resp$PlotID==PLT,"std.err"] <- mod.sum$tTable[,"Std.Error"]
+  drought.resp[drought.resp$PlotID==PLT,"t.stat"] <- mod.sum$tTable[,"t-value"]
   drought.resp[drought.resp$PlotID==PLT,"p.val"] <- mod.sum$tTable[,"p-value"]
   
 }
