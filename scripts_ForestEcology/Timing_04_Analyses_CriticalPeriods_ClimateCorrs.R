@@ -11,15 +11,19 @@ dat.tr$TreeID <- as.factor(substr(dat.tr$CoreID, 1, 6))
 dat.tr <- dat.tr[dat.tr$year<2019,]
 summary(dat.tr)
 
-# Find valid DBH reconstructions
-dat.tree <- aggregate(dat.tr[,c("RW.mm", "DBH.cm", "RWI")],
-                      by=dat.tr[,c("PlotID", "TreeID", "CoreID", "Crossdated")],
-                      FUN=function(x){length(which(!is.na(x)))})
-summary(dat.tree)
-dat.tree[dat.tree$DBH.cm<10,]
-hist(dat.tree$DBH.cm)
-summary(dat.tr[dat.tr$DBH.cm>=80,])
+# # Find valid DBH reconstructions
+# dat.tree <- aggregate(dat.tr[,c("RW.mm", "DBH.cm", "RWI")],
+                      # by=dat.tr[,c("PlotID", "TreeID", "CoreID", "Crossdated")],
+                      # FUN=function(x){length(which(!is.na(x)))})
+# summary(dat.tree)
+# dat.tree[dat.tree$DBH.cm<10,]
+# hist(dat.tree$DBH.cm)
+# summary(dat.tr[dat.tr$DBH.cm>=80,])
 
+dat.tree <- aggregate(dat.tr[,c("RWI", "BAI.cm2")],
+                      by=dat.tr[,c("PlotID", "year", "TreeID")],
+                      FUN=mean, na.rm=T)
+summary(dat.tree)
 # --------------
 # Bring in Daymet & do some stuff
 # --------------
@@ -47,7 +51,7 @@ summary(dat.daymet)
 # --------------
 
 # Bring the met data & ring data together
-dat.all <- merge(dat.tr[!is.na(dat.tr$RW.mm),], dat.daymet[,4:ncol(dat.daymet)], all.x=F)
+dat.all <- merge(dat.tree[!is.na(dat.tr$RWI),], dat.daymet[,4:ncol(dat.daymet)], all.x=F)
 summary(dat.all)
 # ----------------------------------
 
@@ -123,7 +127,7 @@ for(plt in unique(dat.all$PlotID)){
         # mod.var <- nlme::lme(RESP ~ PRED, random=list(TreeID=~1, CoreID=~1), data=dat.tmp[dat.tmp$CoreID!="608012B",], na.action=na.omit)
         
         # system.time(
-        mod.var <- nlme::lme(RESP ~ PRED, random=list(TreeID=~1, CoreID=~1, year=~1), data=dat.tmp[!is.na(dat.tmp$RESP),], na.action=na.omit)
+        mod.var <- nlme::lme(RESP ~ PRED, random=list(TreeID=~1, year=~1), data=dat.tmp[!is.na(dat.tmp$RESP),], na.action=na.omit)
         # )
         mod.sum <- summary(mod.var)
         
