@@ -77,7 +77,18 @@ for(plt in 1:length(files.rwl)){
   
   # Detrend ring-widths to remove potentially confounding tree-level temporal trends
   #  - NOTE: There are many ways we could detrend.  We're using spline as a default.
-  dat.detrend <- dplR::detrend(dat.rwl, method="Spline")
+  dat.rwl2 <- dat.rwl # Making a second data frame where we can get rid of 2019 for spline purposes
+  dat.rwl2["2019",] <- NA
+  dat.detrend <- dplR::detrend(dat.rwl2, method="Spline")
+
+  # Turn things into a chronology & store it for safe keeping
+  dat.chron <- dplR::chron(dat.detrend[names(dat.detrend) %in% dat.core$CoreID[dat.core$Crossdated=="Y" & !is.na(dat.core$Crossdated)]])
+  
+  png(file.path(path.rwl, paste0(PLT, "_chronology.png")), height=6, width=8, units="in", res=120)
+  dplR::plot.crn(dat.chron, crn.lwd=2, crn.line.col="red2")
+  dev.off()
+  
+  dplR::write.crn(dat.chron, file.path(path.rwl, paste0(PLT, "_crossdated.crn")))
   
   # reverse the orders of our raw & detrended stuff so present is on top 
   # (easier for my sanity)
