@@ -120,30 +120,6 @@ ggplot(data=drought.summary) +
   geom_bar(aes(x=year, y=pdsi.ncdc, color=pdsi.ncdc), stat='identity') +
   scale_color_gradient2(low="red2", high="blue2", mid="gray50", midpoint=0)
 
-png(file.path(path.google, "figures/Drought_Response", "TimeSeries_PDSI_NCDC_MeanMin.png"), height=8, width=10, units="in", res=120)
-ggplot(data=drought.summary) +
-  facet_grid(type~.) +
-  geom_bar(aes(x=year, y=pdsi.ncdc, fill=pdsi.ncdc), stat='identity') +
-  scale_fill_gradientn(name="PDSI", colors=c("#d7191c", "#fdae61", "#ffffbf", "#abd9e9", "#2c7bb6"), limits=max(abs(drought.summary$pdsi.ncdc))*c(-1,1)) +
-  scale_x_continuous(expand=c(0,0)) +
-  scale_y_continuous(name="Drought (PDSI)") +
-  theme(legend.position = "top",
-        panel.background = element_rect(color="black", fill="black"),
-        panel.grid = element_blank())
-dev.off()
-
-png(file.path(path.google, "figures/Drought_Response", "TimeSeries_SPEI_WRCC_MeanMin.png"), height=6, width=10, units="in", res=120)
-ggplot(data=drought.summary[drought.summary$type=="summer.mean",]) +
-  facet_grid(type~.) +
-  geom_bar(aes(x=year, y=spei.wrcc, fill=spei.wrcc), stat='identity') +
-  scale_fill_gradientn(name="SPEI", colors=c("#d7191c", "#fdae61", "#ffffbf", "#abd9e9", "#2c7bb6"), limits=max(abs(drought.summary$spei.wrcc))*c(-1,1)) +
-  scale_x_continuous(expand=c(0,0)) +
-  scale_y_continuous(name="Drought (SPEI)") +
-  theme(legend.position = "top",
-        panel.background = element_rect(color="black", fill="black"),
-        panel.grid = element_blank())
-dev.off()
-
 # -----------------
 # ---------------------------------------
 
@@ -151,42 +127,32 @@ dev.off()
 # ---------------------------------------
 # 2. Bring in tree-ring data to look at responses
 # ---------------------------------------
-yrs.drought <- unique(dat.all[dat.all$pdsi.ncdc<=-3, "year"])
-yrs.drought <- yrs.drought[yrs.drought!=1964] # Taking out 1964 
+yrs.drought <- unique(drought.summary[drought.summary$pdsi.ncdc<=-4, "year"])
+yrs.drought <- sort(yrs.drought)
 
-path.rwl <- file.path(path.google, "data/RingsWidths_Raw/crossdated/")
+path.crn <- file.path(path.google, "data/RingsWidths_Raw/crossdated/")
 
 # Get a list of the files (plots) we have available
-files.rwl <- dir(path.rwl, ".rwl")
+files.crn <- dir(path.crn, ".crn")
 
 # Loop through each file and do some stuff to it
 # dat.all <- data.frame() # Set up a empty data frame to store everything in
 sea.all <- data.frame()
-for(plt in 1:length(files.rwl)){
-  PLT <- stringr::str_split(files.rwl[plt], "_")[[1]][1]
+for(plt in 1:length(files.crn)){
+  PLT <- stringr::str_split(files.crn[plt], "_")[[1]][1]
   
   # We have some plots that don't have "_combined" as part of the name & 
-  # we want to exclude .rwl from the PlotID
-  if(stringr::str_sub(PLT,-4,-1)==".rwl") PLT <- stringr::str_sub(PLT,1,-5)
+  # we want to exclude .crn from the PlotID
+  if(stringr::str_sub(PLT,-4,-1)==".crn") PLT <- stringr::str_sub(PLT,1,-5)
   
   # -----------  
   # 1. Read in & detrend the raw ring width data
   # -----------  
-  # Get the raw data
-  dat.rwl <- dplR::read.rwl(file.path(path.rwl, files.rwl[plt])) # read in raw data
-  
-  # Detrend ring-widths to remove potentially confounding tree-level temporal trends
-  #  - NOTE: There are many ways we could detrend.  We're using spline as a default.
-  dat.detrend <- dplR::detrend(dat.rwl, method="Spline")
-  
-  # Turn things into a chronology
-  dat.chron <- dplR::chron(dat.detrend)
-  png(file.path(path.rwl, paste0(PLT, "_chronology.png")), height=6, width=8, units="in", res=120)
-  dplR::plot.crn(dat.chron, crn.lwd=2, crn.line.col="red2")
-  dev.off()
+  # Get the chrnology
+  dat.crn <- dplR::read.crn(file.path(path.crn, files.crn[plt])) # read in raw data
   
   # Do an SEA
-  sea.out <- dplR::sea(dat.chron, yrs.drought)
+  sea.out <- dplR::sea(dat.crn, yrs.drought)
   sea.out$PlotID <- PLT
   
   sea.all <- rbind(sea.all, sea.out)
@@ -198,8 +164,8 @@ summary(sea.all)
 png(file.path(path.google, "figures/Drought_Response", "Drought_Effect_SEA_StatSig.png"), height=8, width=10, units="in", res=120)
 ggplot(data=sea.all) +
   facet_wrap(~PlotID) +
-  geom_bar(data=sea.all[sea.all$p>=0.05,], aes(x=as.factor(lag), y=se, fill="n.s."), stat="identity") +
-  geom_bar(data=sea.all[sea.all$p<0.05,], aes(x=as.factor(lag), y=se, fill="sig"), stat="identity") +
+  geom_bar(data=sea.all[!is.na(sea.all$p) & sea.all$p>=0.05,], aes(x=as.factor(lag), y=se, fill="n.s."), stat="identity") +
+  geom_bar(data=sea.all[!is.na(sea.all$p) & sea.all$p<0.05,], aes(x=as.factor(lag), y=se, fill="sig"), stat="identity") +
   scale_fill_manual(name="", values=c("gray50", "red2")) +
   scale_x_discrete(name="Drought Lag") +
   scale_y_continuous(name="Drought Effect") +
