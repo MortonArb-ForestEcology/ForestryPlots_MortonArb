@@ -20,8 +20,8 @@ summary(dat.tr)
 # hist(dat.tree$DBH.cm)
 # summary(dat.tr[dat.tr$DBH.cm>=80,])
 
-dat.tree <- aggregate(dat.tr[,c("RWI", "BAI.cm2")],
-                      by=dat.tr[,c("PlotID", "year", "TreeID")],
+dat.tree <- aggregate(dat.tr[dat.tr$Crossdated=="Y",c("RWI", "BAI.cm2")],
+                      by=dat.tr[dat.tr$Crossdated=="Y",c("PlotID", "year", "TreeID")],
                       FUN=mean, na.rm=T)
 summary(dat.tree)
 # --------------
@@ -84,14 +84,15 @@ summary(mod.out[mod.out$PlotID=="PIST-E" & mod.out$pred=="prcp.mm",])
 pb <- txtProgressBar(min=0, max=nrow(mod.out), style = 3)
 pb.ind <- 1
 for(plt in unique(dat.all$PlotID)){
+  # if(nrow(dat.all[dat.all$PlotID==plt & dat.all$Crossdated=="Y",])==0){
+  #   warning(paste("No Crossdated Cores in", plt, "-- Skipping for now"))
+  #   pb.ind=pb.ind + length(days.use)*length(vars.pred)
+  #   next
+  # }
   for(i in days.use){
     # Subset to just crossdated samples
-    dat.tmp <- dat.all[dat.all$PlotID==plt & dat.all$yday==i & !is.na(dat.all$Crossdated) & dat.all$Crossdated=="Y",]
-    if(nrow(dat.tmp)==0){
-      warning(paste("No Crossdated Cores in", plt, "-- Skipping for now"))
-      next
-    }
-    
+    dat.tmp <- dat.all[dat.all$PlotID==plt & dat.all$yday==i,]
+
     for(VAR in vars.pred){
       # dat.tmp$PRED <- dat.tmp[,VAR]
       dat.tmp$PRED <- dat.tmp[,paste0(VAR, ".wk")]
