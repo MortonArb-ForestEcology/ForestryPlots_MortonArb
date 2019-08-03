@@ -243,3 +243,112 @@ ggplot(data=mod.out) +
 dev.off()
 
 # ----------------------------------
+
+# ----------------------------------
+# Doing some analyses and sumamries by mycorhizal type
+# ----------------------------------
+mod.out <- read.csv(file.path(path.google, "data/CriticalPeriods", "ClimateCorrs_Daily.csv"))
+
+mod.out$Wood <- NA # Trachied, Ring, Diffuse
+mod.out[mod.out$PlotID %in% c("PLOC-W", "AEGL-E"), "Wood"] <- c("diffuse")
+mod.out[mod.out$PlotID %in% c("ASTR-W", "ASTR-E", "CAOV-E", "QUAL-E", "QUBI-W", "ROPS-W"), "Wood"] <- c("ring")
+mod.out[is.na(mod.out$Wood), "Wood"] <- "tracheid"
+mod.out$Wood <- as.factor(mod.out$Wood)
+summary(mod.out)
+
+mod.out$Myco <- NA # AM/EM Mycorrhizal type
+mod.out[mod.out$PlotID %in% c("AEGL-E", "PLOC-W", "ASTR-W", "ASTR-E", "ROPS-W", "CHPI-E", "JUCH-W", "THOC-W1", "THOC-W2"), "Myco"] <- c("AM")
+mod.out[is.na(mod.out$Myco), "Myco"] <- "EM"
+mod.out$Myco <- as.factor(mod.out$Myco)
+summary(mod.out)
+
+
+png(file.path(path.google, "figures/CriticalPeriods", "ClimateCorr_Daily_t-stat_byWood.png"), height=8, width=10, units="in", res=120)
+ggplot(data=mod.out) +
+  facet_grid(pred~Wood) +
+  geom_point(aes(x=yday, y=t.stat), color="gray50", size=0.5, alpha=.5) +
+  stat_smooth(aes(x=yday, y=t.stat)) +
+  geom_hline(yintercept=0, linetype="dashed") +
+  theme(panel.background = element_rect(fill=NA, color="black"),
+        panel.grid=element_blank(),
+        panel.spacing = unit(0, "lines"))
+dev.off()
+
+png(file.path(path.google, "figures/CriticalPeriods", "ClimateCorr_Daily_t-stat_byMyco.png"), height=8, width=10, units="in", res=120)
+ggplot(data=mod.out) +
+  facet_grid(pred~Myco) +
+  geom_point(aes(x=yday, y=t.stat), color="gray50", size=0.5, alpha=.5) +
+  stat_smooth(aes(x=yday, y=t.stat)) +
+  geom_hline(yintercept=0, linetype="dashed") +
+  theme(panel.background = element_rect(fill=NA, color="black"),
+        panel.grid=element_blank(),
+        panel.spacing = unit(0, "lines"))
+dev.off()
+
+
+gam.prcp.wood <- mgcv::gamm(t.stat ~ s(yday, by=Wood), random=list(PlotID=~1), data=mod.out[mod.out$pred=="prcp.mm",])
+summary(gam.prcp.wood$lme)
+summary(gam.prcp.wood$gam)
+
+anova(gam.prcp.wood$gam)
+anova(gam.prcp.wood$lme)
+
+
+gam.prcp.myco <- mgcv::gamm(t.stat ~ s(yday, by=Myco), random=list(PlotID=~1), data=mod.out[mod.out$pred=="prcp.mm",])
+summary(gam.prcp.myco$gam)
+anova(gam.prcp.myco$gam)
+
+summary(gam.prcp.myco$lme)
+anova(gam.prcp.myco$lme)
+
+# ----------
+# Precipitation
+# ----------
+lme.prcp.myco <- nlme::lme(t.stat ~ Myco, random=list(yday=~1, PlotID=~1), data=mod.out[mod.out$pred=="prcp.mm",])
+summary(lme.prcp.myco)
+# lme.prcp.mycob <- nlme::lme(t.stat ~ Myco-1, random=list(yday=~1, PlotID=~1), data=mod.out[mod.out$pred=="prcp.mm",])
+# summary(lme.prcp.mycob)
+
+lme.prcp.myco2 <- nlme::lme(t.stat ~ Myco, random=list(yday=~1, Wood=~1, PlotID=~1), data=mod.out[mod.out$pred=="prcp.mm",])
+summary(lme.prcp.myco2)
+
+lme.prcp.myco2b <- nlme::lme(t.stat ~ Myco-1, random=list(yday=~1, Wood=~1, PlotID=~1), data=mod.out[mod.out$pred=="prcp.mm",])
+summary(lme.prcp.myco2b)
+
+lme.prcp.wood <- nlme::lme(t.stat ~ Wood, random=list(yday=~1, PlotID=~1), data=mod.out[mod.out$pred=="prcp.mm",])
+summary(lme.prcp.wood)
+
+lme.prcp.wood2 <- nlme::lme(t.stat ~ Wood, random=list(yday=~1, Myco=~1, PlotID=~1), data=mod.out[mod.out$pred=="prcp.mm",])
+summary(lme.prcp.wood2)
+
+lme.prcp.wood2b  <- nlme::lme(t.stat ~ Wood-1, random=list(yday=~1, Myco=~1, PlotID=~1), data=mod.out[mod.out$pred=="prcp.mm",])
+summary(lme.prcp.wood2b)
+
+# ----------
+
+# ----------
+# Temperature effects
+# ----------
+lme.tmax.myco <- nlme::lme(t.stat ~ Myco, random=list(yday=~1, PlotID=~1), data=mod.out[mod.out$pred=="tmax.C",])
+summary(lme.tmax.myco)
+
+lme.tmax.myco2 <- nlme::lme(t.stat ~ Myco, random=list(yday=~1, Wood=~1, PlotID=~1), data=mod.out[mod.out$pred=="tmax.C",])
+summary(lme.tmax.myco2)
+
+lme.tmax.wood <- nlme::lme(t.stat ~ Wood, random=list(yday=~1, PlotID=~1), data=mod.out[mod.out$pred=="tmax.C",])
+summary(lme.tmax.wood)
+
+# Take into account mycorrhizal association
+lme.tmax.wood2b <- nlme::lme(t.stat ~ Wood-1, random=list(yday=~1, Myco=~1, PlotID=~1), data=mod.out[mod.out$pred=="tmax.C",])
+summary(lme.tmax.wood2b) # All are sensitive to temperature; overall negative --> warmer = worse
+
+lme.tmax.wood2 <- nlme::lme(t.stat ~ Wood, random=list(yday=~1, Myco=~1, PlotID=~1), data=mod.out[mod.out$pred=="tmax.C",])
+summary(lme.tmax.wood2) # Ring porous are more sensitive than other wood types
+anova(lme.tmax.wood2)
+
+# Ring porous more sensitive than diffuse & tracheid; tr
+# ----------
+
+# resp.prcp.wood <- nlme::lme(t.stat ~ Wood, random=list(yday=~1, PlotID=~1), data=mod.out[mod.out$pred=="prcp.mm",])
+
+# ----------------------------------
