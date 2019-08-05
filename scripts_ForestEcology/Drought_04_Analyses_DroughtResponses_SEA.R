@@ -127,8 +127,11 @@ ggplot(data=drought.summary) +
 # ---------------------------------------
 # 2. Bring in tree-ring data to look at responses
 # ---------------------------------------
-yrs.drought <- unique(drought.summary[drought.summary$pdsi.ncdc<=-4, "year"])
-yrs.drought <- sort(yrs.drought)
+drt.extreme <- unique(dat.all[dat.all$pdsi.ncdc<=-4, "year"])
+drt.extreme <- sort(drt.extreme)
+
+drt.severe <- unique(dat.all[dat.all$pdsi.ncdc<=-3, "year"])
+drt.severe <- sort(drt.severe)
 
 path.crn <- file.path(path.google, "data/RingsWidths_Raw/crossdated/")
 
@@ -151,26 +154,53 @@ for(plt in 1:length(files.crn)){
   # Get the chrnology
   dat.crn <- dplR::read.crn(file.path(path.crn, files.crn[plt])) # read in raw data
   
-  # Do an SEA
-  sea.out <- dplR::sea(dat.crn, yrs.drought)
-  sea.out$PlotID <- PLT
-  
-  sea.all <- rbind(sea.all, sea.out)
+  for(type.drought in c("severe", "extreme")){
+    # Do an SEA
+    yrs.drought <- ifelse(type.drought=="extreme", drt.extreme, drt.severe)
+    
+    sea.out <- dplR::sea(dat.crn, yrs.drought)
+    sea.out$PlotID <- PLT
+    sea.out$type <- type.drought
+    
+    sea.all <- rbind(sea.all, sea.out)
+  }
 }
 sea.all$PlotID <- as.factor(sea.all$PlotID)
 summary(sea.all)
 
 
-png(file.path(path.google, "figures/Drought_Response", "Drought_Effect_SEA_StatSig.png"), height=8, width=10, units="in", res=120)
-ggplot(data=sea.all) +
+png(file.path(path.google, "figures/Drought_Response", "Drought_Effect_SEA_StatSig_Extreme.png"), height=8, width=10, units="in", res=120)
+ggplot(data=sea.all[sea.all$type=="extreme",]) +
   facet_wrap(~PlotID) +
   geom_bar(data=sea.all[!is.na(sea.all$p) & sea.all$p>=0.05,], aes(x=as.factor(lag), y=se, fill="n.s."), stat="identity") +
   geom_bar(data=sea.all[!is.na(sea.all$p) & sea.all$p<0.05,], aes(x=as.factor(lag), y=se, fill="sig"), stat="identity") +
+  geom_hline(yintercept=0, size=0.5) +
   scale_fill_manual(name="", values=c("gray50", "red2")) +
   scale_x_discrete(name="Drought Lag") +
   scale_y_continuous(name="Drought Effect") +
   theme_bw() +
-  theme(legend.position = "top")
+  theme(legend.position = "top",
+        legend.key = element_rect(fill=NA),
+        panel.spacing = unit(0, "lines"),
+        panel.grid = element_blank(),
+        panel.background=element_rect(fill=NA, color="black"))
+v.off()
+
+png(file.path(path.google, "figures/Drought_Response", "Drought_Effect_SEA_StatSig_Severe.png"), height=8, width=10, units="in", res=120)
+ggplot(data=sea.all[sea.all$type=="severe",]) +
+  facet_wrap(~PlotID) +
+  geom_bar(data=sea.all[!is.na(sea.all$p) & sea.all$p>=0.05,], aes(x=as.factor(lag), y=se, fill="n.s."), stat="identity") +
+  geom_bar(data=sea.all[!is.na(sea.all$p) & sea.all$p<0.05,], aes(x=as.factor(lag), y=se, fill="sig"), stat="identity") +
+  scale_fill_manual(name="", values=c("gray50", "red2")) +
+  geom_hline(yintercept=0, size=0.5) +
+  scale_x_discrete(name="Drought Lag") +
+  scale_y_continuous(name="Drought Effect") +
+  theme_bw() +
+  theme(legend.position = "top",
+        legend.key = element_rect(fill=NA),
+        panel.spacing = unit(0, "lines"),
+        panel.grid = element_blank(),
+        panel.background=element_rect(fill=NA, color="black"))
 dev.off()
 
 write.csv(sea.all, file.path(path.google, "data/Drought_Response", "DroughtResp_SEA_out.csv"), row.names=F)  

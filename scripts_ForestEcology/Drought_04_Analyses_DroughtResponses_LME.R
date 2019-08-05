@@ -121,6 +121,33 @@ drought.summary <- rbind(drought.mean, drought.min)
 #   geom_bar(aes(x=year, y=pdsi.ncdc, color=pdsi.ncdc), stat='identity') +
 #   scale_color_gradient2(low="red2", high="blue2", mid="gray50", midpoint=0)
 
+png(file.path(path.google, "figures/Drought_Response", "TimeSeries_PDSI_NCDC_Mean.png"), height=8, width=10, units="in", res=120)
+ggplot(data=drought.summary[drought.summary$type=="summer.mean",]) +
+  facet_grid(type~.) +
+  geom_bar(aes(x=year, y=pdsi.ncdc, fill=pdsi.ncdc), stat='identity') +
+  scale_fill_gradientn(name="PDSI", colors=c("#d7191c", "#fdae61", "#ffffbf", "#abd9e9", "#2c7bb6"), limits=max(abs(drought.summary$pdsi.ncdc))*c(-1,1)) +
+  scale_x_continuous(expand=c(0,0)) +
+  scale_y_continuous(name="Drought (PDSI)") +
+  theme(legend.position = "top",
+        panel.background = element_rect(color="black", fill="black"),
+        panel.grid = element_blank())
+dev.off()
+
+png(file.path(path.google, "figures/Drought_Response", "TimeSeries_PDSI_NCDC_Mean2.png"), height=8, width=10, units="in", res=120)
+ggplot(data=drought.summary[drought.summary$type=="summer.mean",]) +
+  # facet_grid(type~.) +
+  geom_bar(aes(x=year, y=pdsi.ncdc, fill=pdsi.ncdc), stat='identity') +
+  scale_fill_gradientn(name="PDSI", colors=c("#d7191c", "#fdae61", "#ffffbf", "#abd9e9", "#2c7bb6"), limits=max(abs(drought.summary$pdsi.ncdc))*c(-1,1)) +
+  geom_hline(yintercept=-4, color="red2", linetype="dashed") +
+  geom_hline(yintercept=-3, color="orange3", linetype="dashed") +
+  scale_color_manual(values=c("red2", "orange3")) +
+  scale_x_continuous(expand=c(0,0)) +
+  scale_y_continuous(name="Drought (PDSI)") +
+  theme(legend.position = "top",
+        panel.background = element_rect(color="black", fill="black"),
+        panel.grid = element_blank())
+dev.off()
+
 png(file.path(path.google, "figures/Drought_Response", "TimeSeries_PDSI_NCDC_MeanMin.png"), height=8, width=10, units="in", res=120)
 ggplot(data=drought.summary) +
   facet_grid(type~.) +
@@ -452,17 +479,49 @@ summary(dat.drought)
 
 png(file.path(path.google, "figures/Drought_Response", "Drought_LagEffect_LME_StatSig_Extreme_Severe.png"), height=8, width=10, units="in", res=120)
 ggplot(data=dat.drought[!is.na(dat.drought$lag),]) +
-  facet_grid(drought.type~PlotID, scales="free") +
+  facet_grid(drought.type~PlotID, scales="fixed") +
   geom_boxplot(aes(x=as.factor(lag), y=RWI.rel, fill=sig)) +
   geom_hline(yintercept=0, linetype="solid", color="blue") +
   scale_fill_manual(values=c("gray50", "red2")) +
   scale_x_discrete(name="Drought Lag") +
   scale_y_continuous(name="RWI difference") +
   theme(legend.position = "top",
+        legend.key = element_rect(fill=NA),
         panel.spacing = unit(0, "lines"),
         panel.grid = element_blank(),
         panel.background=element_rect(fill=NA, color="black"))
 dev.off()
+
+png(file.path(path.google, "figures/Drought_Response", "Drought_LagEffect_LME_StatSig_Severe.png"), height=8, width=10, units="in", res=120)
+ggplot(data=dat.drought[!is.na(dat.drought$lag) & dat.drought$drought.type=="severe",]) +
+  facet_wrap(~PlotID, scales="fixed") +
+  geom_boxplot(aes(x=as.factor(lag), y=RWI.rel, fill=sig)) +
+  geom_hline(yintercept=0, linetype="solid", color="blue") +
+  scale_fill_manual(values=c("gray50", "red2")) +
+  scale_x_discrete(name="Drought Lag") +
+  scale_y_continuous(name="RWI difference") +
+  theme(legend.position = "top",
+        legend.key = element_rect(fill=NA),
+        panel.spacing = unit(0, "lines"),
+        panel.grid = element_blank(),
+        panel.background=element_rect(fill=NA, color="black"))
+dev.off()
+
+png(file.path(path.google, "figures/Drought_Response", "Drought_LagEffect_LME_StatSig_Extreme.png"), height=8, width=10, units="in", res=120)
+ggplot(data=dat.drought[!is.na(dat.drought$lag) & dat.drought$drought.type=="extreme",]) +
+  facet_wrap(~PlotID, scales="fixed") +
+  geom_boxplot(aes(x=as.factor(lag), y=RWI.rel, fill=sig)) +
+  geom_hline(yintercept=0, linetype="solid", color="blue") +
+  scale_fill_manual(values=c("gray50", "red2")) +
+  scale_x_discrete(name="Drought Lag") +
+  scale_y_continuous(name="RWI difference") +
+  theme(legend.position = "top",
+        legend.key = element_rect(fill=NA),
+        panel.spacing = unit(0, "lines"),
+        panel.grid = element_blank(),
+        panel.background=element_rect(fill=NA, color="black"))
+dev.off()
+
 # ---------------------------------------
 
 
