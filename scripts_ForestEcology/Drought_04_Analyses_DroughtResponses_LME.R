@@ -207,6 +207,22 @@ summary(dat.all)
 # Evaluating overall drought sensitivity
 # ---------------------------------------
 
+for(PLT in unique(dat.all$PlotID)){
+  png(file.path(path.google, "figures/Drought_Response/LagResponse_LME_bySpecies", paste0("Exploratory_Drought_RWI_", PLT, ".png")), height=6, width=6, units="in", res=120)
+  print(
+    ggplot(data=dat.all[!is.na(dat.all$Crossdated) & dat.all$Crossdated=="Y" & dat.all$PlotID==PLT,]) +
+      # facet_wrap(~PlotID, scales="free") +
+      ggtitle(PLT) +
+      geom_point(aes(x=pdsi.ncdc, y=RWI), size=0.5, color="gray50") +
+      stat_smooth(aes(x=pdsi.ncdc, y=RWI), method="lm", color="blue", fill="blue", alpha=0.5) +
+      scale_x_continuous(name="PDSI") +
+      scale_y_continuous(expand=c(0,0), limits=range(dat.all$RWI, na.rm=T)) +
+      geom_hline(yintercept=1, linetype="dashed", color="black") +
+      theme_bw()
+    )
+  dev.off()
+}
+
 png(file.path(path.google, "figures/Drought_Response", "Exploratory_Drought_RWI_all.png"), height=8, width=10, units="in", res=120)
 ggplot(data=dat.all[!is.na(dat.all$Crossdated) & dat.all$Crossdated=="Y",]) +
   facet_wrap(~PlotID, scales="free") +

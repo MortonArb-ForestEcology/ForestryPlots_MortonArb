@@ -159,6 +159,27 @@ yrs.mark$mark.yday[1] <- yrs.mark$mark.yday[1]-365
 
 PRGn5 <- c("#7b3294", "#c2a5cf", "gray50", "#a6dba0", "#008837")
 
+for(PLT in unique(mod.out$PlotID)){
+  png(file.path(path.google, "figures/CriticalPeriods/t-scores_0.01_bySpecies", paste0("ClimateCorr_Daily_Smoothed7_t-stat_", PLT,".png")), height=10, width=8, units="in", res=120)
+  print(
+  ggplot(data=mod.out[mod.out$PlotID==PLT,]) +
+    facet_grid(PlotID~., scales="free") +
+    # ggtitle(PLT) +
+    geom_tile(data=mod.out[mod.out$PlotID==PLT & mod.out$p.val>=0.01,], aes(x=yday, y=pred), fill="gray50") +
+    geom_tile(data=mod.out[mod.out$PlotID==PLT & mod.out$p.val<0.01,], aes(x=yday, y=pred, fill=t.stat)) +
+    # geom_tile(aes(x=yday, y=resp, fill=t.stat)) +
+    geom_vline(xintercept = 0, linetype="dashed") +
+    scale_y_discrete(expand=c(0,0)) +
+    scale_x_continuous(name="Day of Year", expand=c(0,0), breaks=yrs.mark$mark.yday, labels = yrs.mark$Label) +
+    scale_fill_gradientn(name="t-stat", colors=PRGn5, limits=max(mod.out$t.stat)*c(-1,1))+
+    theme(legend.position="top",
+          axis.title.y=element_blank())
+  )
+  dev.off()
+}
+
+
+
 png(file.path(path.google, "figures/CriticalPeriods", "ClimateCorr_Daily_Smoothed7_t-stat.png"), height=10, width=8, units="in", res=120)
 ggplot(data=mod.out) +
   facet_grid(pred~., scales="free") +

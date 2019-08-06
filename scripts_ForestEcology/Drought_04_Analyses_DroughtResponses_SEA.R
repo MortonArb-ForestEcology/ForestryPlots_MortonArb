@@ -168,31 +168,100 @@ for(plt in 1:length(files.crn)){
 sea.all$PlotID <- as.factor(sea.all$PlotID)
 summary(sea.all)
 
+for(PLT in unique(sea.all$PlotID)){
+  # png(file.path(path.google, "figures/Drought_Response", "Drought_Effect_SEA_StatSig_Extreme.png"), height=6, width=6, units="in", res=120)
+  if(nrow(sea.all[sea.all$type=="severe" & sea.all$PlotID==PLT & !is.na(sea.all$p),])==0) next
+  
+  png(file.path(path.google, "figures/Drought_Response/SEM_bySpecies", paste0("Drought_Effect_SEA_StatSig_Severe_", PLT, ".png")), height=6, width=6, units="in", res=120)
+  if(nrow(sea.all[sea.all$type=="severe" & sea.all$PlotID==PLT & !is.na(sea.all$p) & sea.all$p<0.05,])>0){
+    print(
+      ggplot(data=sea.all[sea.all$type=="severe" & sea.all$PlotID==PLT,]) +
+        facet_wrap(~PlotID) +
+        geom_bar(data=sea.all[sea.all$type=="severe" & sea.all$PlotID==PLT & !is.na(sea.all$p) & sea.all$p>=0.05,], aes(x=as.factor(lag), y=se, fill="n.s."), stat="identity") +
+        geom_bar(data=sea.all[sea.all$type=="severe" & sea.all$PlotID==PLT & !is.na(sea.all$p) & sea.all$p<0.05,], aes(x=as.factor(lag), y=se, fill="sig"), stat="identity") +
+        scale_fill_manual(name="", values=c("gray50", "red2")) +
+        geom_hline(yintercept=0, size=0.5) +
+        scale_x_discrete(name="Drought Lag") +
+        scale_y_continuous(name="Drought Effect") +
+        theme_bw() +
+        theme(legend.position = "top",
+              legend.key = element_rect(fill=NA),
+              panel.spacing = unit(0, "lines"),
+              panel.grid = element_blank(),
+              panel.background=element_rect(fill=NA, color="black"))
+    )
+    
+  } else {
+    print(
+      ggplot(data=sea.all[sea.all$type=="severe" & sea.all$PlotID==PLT,]) +
+        facet_wrap(~PlotID) +
+        geom_bar(data=sea.all[sea.all$type=="severe" & sea.all$PlotID==PLT & !is.na(sea.all$p) & sea.all$p>=0.05,], aes(x=as.factor(lag), y=se, fill="n.s."), stat="identity") +
+        scale_fill_manual(name="", values=c("gray50", "red2")) +
+        geom_hline(yintercept=0, size=0.5) +
+        scale_x_discrete(name="Drought Lag") +
+        scale_y_continuous(name="Drought Effect") +
+        theme_bw() +
+        theme(legend.position = "top",
+              legend.key = element_rect(fill=NA),
+              panel.spacing = unit(0, "lines"),
+              panel.grid = element_blank(),
+              panel.background=element_rect(fill=NA, color="black"))
+    )
+    
+  }
+  dev.off()
+  
+  if(nrow(sea.all[sea.all$type=="extreme" & sea.all$PlotID==PLT & !is.na(sea.all$p),])==0) next
+  
+  png(file.path(path.google, "figures/Drought_Response/SEA_bySpecies", paste0("Drought_Effect_SEA_StatSig_Extreme_", PLT, ".png")), height=6, width=6, units="in", res=120)
+  if(nrow(sea.all[sea.all$type=="extreme" & sea.all$PlotID==PLT & !is.na(sea.all$p) & sea.all$p<0.05,])>0){
+    print(
+      ggplot(data=sea.all[sea.all$type=="extreme" & sea.all$PlotID==PLT,]) +
+        facet_wrap(~PlotID) +
+        geom_bar(data=sea.all[sea.all$type=="extreme" & sea.all$PlotID==PLT & !is.na(sea.all$p) & sea.all$p>=0.05,], aes(x=as.factor(lag), y=se, fill="n.s."), stat="identity") +
+        geom_bar(data=sea.all[sea.all$type=="extreme" & sea.all$PlotID==PLT & !is.na(sea.all$p) & sea.all$p<0.05,], aes(x=as.factor(lag), y=se, fill="sig"), stat="identity") +
+        scale_fill_manual(name="", values=c("gray50", "red2")) +
+        geom_hline(yintercept=0, size=0.5) +
+        scale_x_discrete(name="Drought Lag") +
+        scale_y_continuous(name="Drought Effect") +
+        theme_bw() +
+        theme(legend.position = "top",
+              legend.key = element_rect(fill=NA),
+              panel.spacing = unit(0, "lines"),
+              panel.grid = element_blank(),
+              panel.background=element_rect(fill=NA, color="black"))
+    )
+    
+  } else {
+    print(
+      ggplot(data=sea.all[sea.all$type=="extreme" & sea.all$PlotID==PLT,]) +
+        facet_wrap(~PlotID) +
+        geom_bar(data=sea.all[sea.all$type=="extreme" & sea.all$PlotID==PLT & !is.na(sea.all$p) & sea.all$p>=0.05,], aes(x=as.factor(lag), y=se, fill="n.s."), stat="identity") +
+        scale_fill_manual(name="", values=c("gray50", "red2")) +
+        geom_hline(yintercept=0, size=0.5) +
+        scale_x_discrete(name="Drought Lag") +
+        scale_y_continuous(name="Drought Effect") +
+        theme_bw() +
+        theme(legend.position = "top",
+              legend.key = element_rect(fill=NA),
+              panel.spacing = unit(0, "lines"),
+              panel.grid = element_blank(),
+              panel.background=element_rect(fill=NA, color="black"))
+    )
+    
+  }
+  dev.off()
+  
+}
+
 
 png(file.path(path.google, "figures/Drought_Response", "Drought_Effect_SEA_StatSig_Extreme.png"), height=8, width=10, units="in", res=120)
 ggplot(data=sea.all[sea.all$type=="extreme",]) +
   facet_wrap(~PlotID) +
-  geom_bar(data=sea.all[!is.na(sea.all$p) & sea.all$p>=0.05,], aes(x=as.factor(lag), y=se, fill="n.s."), stat="identity") +
-  geom_bar(data=sea.all[!is.na(sea.all$p) & sea.all$p<0.05,], aes(x=as.factor(lag), y=se, fill="sig"), stat="identity") +
+  geom_bar(data=sea.all[sea.all$type=="extreme" & !is.na(sea.all$p) & sea.all$p>=0.05,], aes(x=as.factor(lag), y=se, fill="n.s."), stat="identity") +
+  geom_bar(data=sea.all[sea.all$type=="extreme" & !is.na(sea.all$p) & sea.all$p<0.05,], aes(x=as.factor(lag), y=se, fill="sig"), stat="identity") +
   geom_hline(yintercept=0, size=0.5) +
   scale_fill_manual(name="", values=c("gray50", "red2")) +
-  scale_x_discrete(name="Drought Lag") +
-  scale_y_continuous(name="Drought Effect") +
-  theme_bw() +
-  theme(legend.position = "top",
-        legend.key = element_rect(fill=NA),
-        panel.spacing = unit(0, "lines"),
-        panel.grid = element_blank(),
-        panel.background=element_rect(fill=NA, color="black"))
-v.off()
-
-png(file.path(path.google, "figures/Drought_Response", "Drought_Effect_SEA_StatSig_Severe.png"), height=8, width=10, units="in", res=120)
-ggplot(data=sea.all[sea.all$type=="severe",]) +
-  facet_wrap(~PlotID) +
-  geom_bar(data=sea.all[!is.na(sea.all$p) & sea.all$p>=0.05,], aes(x=as.factor(lag), y=se, fill="n.s."), stat="identity") +
-  geom_bar(data=sea.all[!is.na(sea.all$p) & sea.all$p<0.05,], aes(x=as.factor(lag), y=se, fill="sig"), stat="identity") +
-  scale_fill_manual(name="", values=c("gray50", "red2")) +
-  geom_hline(yintercept=0, size=0.5) +
   scale_x_discrete(name="Drought Lag") +
   scale_y_continuous(name="Drought Effect") +
   theme_bw() +
@@ -202,6 +271,23 @@ ggplot(data=sea.all[sea.all$type=="severe",]) +
         panel.grid = element_blank(),
         panel.background=element_rect(fill=NA, color="black"))
 dev.off()
+
+png(file.path(path.google, "figures/Drought_Response", "Drought_Effect_SEA_StatSig_Severe.png"), height=8, width=10, units="in", res=120)
+ggplot(data=sea.all[sea.all$type=="severe",]) +
+  facet_wrap(~PlotID) +
+  geom_bar(data=sea.all[sea.all$type=="severe" & !is.na(sea.all$p) & sea.all$p>=0.05,], aes(x=as.factor(lag), y=se, fill="n.s."), stat="identity") +
+  geom_bar(data=sea.all[sea.all$type=="severe" & !is.na(sea.all$p) & sea.all$p<0.05,], aes(x=as.factor(lag), y=se, fill="sig"), stat="identity") +
+  scale_fill_manual(name="", values=c("gray50", "red2")) +
+  geom_hline(yintercept=0, size=0.5) +
+  scale_x_discrete(name="Drought Lag") +
+  scale_y_continuous(name="Drought Effect") +
+  theme_bw() +
+  theme(legend.position = "top",
+        legend.key = element_rect(fill=NA),
+        panel.spacing = unit(0, "lines"),
+        panel.grid = element_blank(),
+        panel.background=element_rect(fill=NA, color="black"))
+outdev.off()
 
 write.csv(sea.all, file.path(path.google, "data/Drought_Response", "DroughtResp_SEA_out.csv"), row.names=F)  
 # ---------------------------------------
