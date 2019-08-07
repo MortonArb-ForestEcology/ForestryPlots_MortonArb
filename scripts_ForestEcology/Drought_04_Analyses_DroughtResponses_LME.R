@@ -462,6 +462,13 @@ for(PLT in unique(dat.all$PlotID)){
 summary(drought.resp)
 
 write.csv(drought.resp, file.path(path.google, "data/Drought_Response", "DroughtResp_LAG_LME_summary_output.csv"), row.names=F)  
+# --------------------------------------
+
+# --------------------------------------
+# Graphing the drought response -- 
+# *****Jamy, downlaod the csv file from google, change the file path, and start here! *****
+# --------------------------------------
+drought.resp <- read.csv(file.path(path.google, "data/Drought_Response", "DroughtResp_LAG_LME_summary_output.csv"))
 
 
 ggplot(data=drought.resp) +
