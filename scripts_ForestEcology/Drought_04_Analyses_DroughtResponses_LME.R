@@ -183,6 +183,7 @@ dat.tr <- read.csv(file.path(path.google, "data", "Data_TreeRings_compiled_all.c
 dat.tr$TreeID <- as.factor(substr(dat.tr$CoreID, 1, 6))
 dat.tr <- dat.tr[dat.tr$year<2019,] # Exclude our incomplete year
 dat.tr <- dat.tr[!is.na(dat.tr$Crossdated) & !dat.tr$Crossdated=="N",]
+dat.tr$SPP <- as.factor(substr(dat.tr$PlotID, 1, 4))
 summary(dat.tr)
 
 dat.tr$Wood <- NA # Trachied, Ring, Diffuse
@@ -207,14 +208,14 @@ summary(dat.all)
 # Evaluating overall drought sensitivity
 # ---------------------------------------
 
-for(PLT in unique(dat.all$PlotID)){
-  png(file.path(path.google, "figures/Drought_Response/LagResponse_LME_bySpecies", paste0("Exploratory_Drought_RWI_", PLT, ".png")), height=6, width=6, units="in", res=120)
+for(SPP in unique(dat.all$SPP)){
+  png(file.path(path.google, "figures/Drought_Response/Regression_bySpecies", paste0("Exploratory_Drought_RWI_", SPP, ".png")), height=6, width=6, units="in", res=120)
   print(
-    ggplot(data=dat.all[!is.na(dat.all$Crossdated) & dat.all$Crossdated=="Y" & dat.all$PlotID==PLT,]) +
+    ggplot(data=dat.all[!is.na(dat.all$Crossdated) & dat.all$Crossdated=="Y" & dat.all$SPP==SPP,]) +
       # facet_wrap(~PlotID, scales="free") +
-      ggtitle(PLT) +
-      geom_point(aes(x=pdsi.ncdc, y=RWI), size=0.5, color="gray50") +
-      stat_smooth(aes(x=pdsi.ncdc, y=RWI), method="lm", color="blue", fill="blue", alpha=0.5) +
+      ggtitle(SPP) +
+      geom_point(aes(x=pdsi.ncdc, y=RWI), size=0.25, color="gray75") +
+      stat_smooth(aes(x=pdsi.ncdc, y=RWI, group=PlotID), method="lm", color="blue", fill="blue", alpha=0.5) +
       scale_x_continuous(name="PDSI") +
       scale_y_continuous(expand=c(0,0), limits=range(dat.all$RWI, na.rm=T)) +
       geom_hline(yintercept=1, linetype="dashed", color="black") +
@@ -225,9 +226,9 @@ for(PLT in unique(dat.all$PlotID)){
 
 png(file.path(path.google, "figures/Drought_Response", "Exploratory_Drought_RWI_all.png"), height=8, width=10, units="in", res=120)
 ggplot(data=dat.all[!is.na(dat.all$Crossdated) & dat.all$Crossdated=="Y",]) +
-  facet_wrap(~PlotID, scales="free") +
-  geom_point(aes(x=pdsi.ncdc, y=RWI), size=0.5, color="gray50") +
-  stat_smooth(aes(x=pdsi.ncdc, y=RWI), method="lm", color="blue", fill="blue", alpha=0.5) +
+  facet_wrap(~SPP, scales="free") +
+  geom_point(aes(x=pdsi.ncdc, y=RWI), size=0.25, color="gray75") +
+  stat_smooth(aes(x=pdsi.ncdc, y=RWI, group=PlotID), method="lm", color="blue", fill="blue", alpha=0.5) +
   scale_x_continuous(name="PDSI") +
   geom_hline(yintercept=1, linetype="dashed", color="black") +
   theme_bw()
@@ -235,9 +236,9 @@ dev.off()
 
 png(file.path(path.google, "figures/Drought_Response", "Exploratory_Drought_RWI_all_fixedaxes.png"), height=8, width=10, units="in", res=120)
 ggplot(data=dat.all[!is.na(dat.all$Crossdated) & dat.all$Crossdated=="Y",]) +
-  facet_wrap(~PlotID, scales="fixed") +
-  geom_point(aes(x=pdsi.ncdc, y=RWI), size=0.5, color="gray50") +
-  stat_smooth(aes(x=pdsi.ncdc, y=RWI), method="lm", color="blue", fill="blue", alpha=0.5) +
+  facet_wrap(~SPP, scales="fixed") +
+  geom_point(aes(x=pdsi.ncdc, y=RWI), size=0.25, color="gray75") +
+  stat_smooth(aes(x=pdsi.ncdc, y=RWI,group=PlotID), method="lm", color="blue", fill="blue", alpha=0.5) +
   geom_hline(yintercept=1, linetype="dashed", color="black") +
   scale_x_continuous(name="PDSI") +
   theme_bw()
@@ -247,7 +248,7 @@ dev.off()
 png(file.path(path.google, "figures/Drought_Response", "Exploratory_Drought_RWI_byWood_byMyco.png"), height=8, width=10, units="in", res=120)
 ggplot(data=dat.all[!is.na(dat.all$Crossdated) & dat.all$Crossdated=="Y",]) +
   facet_grid(Myco~Wood, scales="free") +
-  geom_point(aes(x=pdsi.ncdc, y=RWI), size=0.5, color="gray50") +
+  geom_point(aes(x=pdsi.ncdc, y=RWI), size=0.25, color="gray75") +
   stat_smooth(aes(x=pdsi.ncdc, y=RWI), method="lm", color="blue", fill="blue", alpha=0.5) +
   geom_hline(yintercept=1, linetype="dashed", color="black") +
   scale_x_continuous(name="PDSI") +
@@ -257,7 +258,7 @@ dev.off()
 png(file.path(path.google, "figures/Drought_Response", "Exploratory_Drought_RWI_byWood_byMyco_fixedaxes.png"), height=8, width=10, units="in", res=120)
 ggplot(data=dat.all[!is.na(dat.all$Crossdated) & dat.all$Crossdated=="Y",]) +
   facet_grid(Myco~Wood, scales="fixed") +
-  geom_point(aes(x=pdsi.ncdc, y=RWI), size=0.5, color="gray50") +
+  geom_point(aes(x=pdsi.ncdc, y=RWI), size=0.25, color="gray75") +
   stat_smooth(aes(x=pdsi.ncdc, y=RWI), method="lm", color="blue", fill="blue", alpha=0.5) +
   geom_hline(yintercept=1, linetype="dashed", color="black") +
   scale_x_continuous(name="PDSI") +
@@ -267,7 +268,7 @@ dev.off()
 png(file.path(path.google, "figures/Drought_Response", "Exploratory_Drought_RWI_byWood_fixedaxes.png"), height=8, width=10, units="in", res=120)
 ggplot(data=dat.all[!is.na(dat.all$Crossdated) & dat.all$Crossdated=="Y",]) +
   facet_grid(.~Wood, scales="fixed") +
-  geom_point(aes(x=pdsi.ncdc, y=RWI), size=0.5, color="gray50") +
+  geom_point(aes(x=pdsi.ncdc, y=RWI), size=0.25, color="gray75") +
   stat_smooth(aes(x=pdsi.ncdc, y=RWI), method="lm", color="blue", fill="blue", alpha=0.5) +
   geom_hline(yintercept=1, linetype="dashed", color="black") +
   scale_x_continuous(name="PDSI") +
@@ -277,7 +278,7 @@ dev.off()
 png(file.path(path.google, "figures/Drought_Response", "Exploratory_Drought_RWI_byMyco_fixedaxes.png"), height=8, width=10, units="in", res=120)
 ggplot(data=dat.all[!is.na(dat.all$Crossdated) & dat.all$Crossdated=="Y",]) +
   facet_grid(.~Myco, scales="fixed") +
-  geom_point(aes(x=pdsi.ncdc, y=RWI), size=0.5, color="gray50") +
+  geom_point(aes(x=pdsi.ncdc, y=RWI), size=0.25, color="gray75") +
   stat_smooth(aes(x=pdsi.ncdc, y=RWI), method="lm", color="blue", fill="blue", alpha=0.5) +
   geom_hline(yintercept=1, linetype="dashed", color="black") +
   scale_x_continuous(name="PDSI") +
@@ -421,40 +422,40 @@ summary(dat.all)
 # Running the calculation
 # --------------
 # Setting up a table to stick our output
-drought.resp <- data.frame(drought.type = rep(c("extreme", "severe"), each=length(-5:5)*length(unique(dat.all$PlotID))),
+drought.resp <- data.frame(drought.type = rep(c("extreme", "severe"), each=length(-5:5)*length(unique(dat.all$SPP))),
                            lag=rep(-5:5),
-                           PlotID=rep(unique(dat.all$PlotID), each=length(-5:5)),
+                           SPP=rep(unique(dat.all$SPP), each=length(-5:5)),
                            estimate=NA,
                            std.err=NA,
                            t.stat=NA,
                            p.val=NA)
 
-for(PLT in unique(dat.all$PlotID)){
+for(SPP in unique(dat.all$SPP)){
   
   for(TYPE in c("extreme", "severe")){
-    dat.tmp <- dat.all[dat.all$PlotID==PLT & !is.na(dat.all$Crossdated) & dat.all$Crossdated=="Y" 
+    dat.tmp <- dat.all[dat.all$SPP==SPP & !is.na(dat.all$Crossdated) & dat.all$Crossdated=="Y" 
                        & !is.na(dat.all[,paste0("lag.", TYPE)]) & !is.na(dat.all[,paste0("RWI.", TYPE)]), ]
 
     if(nrow(dat.tmp)==0){
-      warning(paste("No events for", PLT, TYPE, "-- skipping!"))
+      warning(paste("No events for", SPP, TYPE, "-- skipping!"))
       next
     }
     dat.tmp$RWI.rel <- dat.tmp[,paste0("RWI.", TYPE)]
     dat.tmp$drought.lag <- dat.tmp[,paste0("lag.", TYPE)]
     
     if(length(which(dat.tmp$drought.lag==0))==0){
-      warning(paste("No events for", PLT, TYPE, "-- skipping!"))
+      warning(paste("No events for", SPP, TYPE, "-- skipping!"))
       next
     }
     
-    mod.lag <- nlme::lme(RWI.rel ~ as.factor(drought.lag)-1, random=list(year=~1, TreeID=~1, CoreID=~1), data=dat.tmp)
+    mod.lag <- nlme::lme(RWI.rel ~ as.factor(drought.lag)-1, random=list(year=~1, PlotID=~1, TreeID=~1, CoreID=~1), data=dat.tmp)
     mod.sum <- summary(mod.lag)
     # mod.sum$tTable
     
-    drought.resp[drought.resp$drought.type==TYPE & drought.resp$PlotID==PLT,"estimate"] <- mod.sum$tTable[,"Value"]
-    drought.resp[drought.resp$drought.type==TYPE & drought.resp$PlotID==PLT,"std.err"] <- mod.sum$tTable[,"Std.Error"]
-    drought.resp[drought.resp$drought.type==TYPE & drought.resp$PlotID==PLT,"t.stat"] <- mod.sum$tTable[,"t-value"]
-    drought.resp[drought.resp$drought.type==TYPE & drought.resp$PlotID==PLT,"p.val"] <- mod.sum$tTable[,"p-value"]
+    drought.resp[drought.resp$drought.type==TYPE & drought.resp$SPP==SPP,"estimate"] <- mod.sum$tTable[,"Value"]
+    drought.resp[drought.resp$drought.type==TYPE & drought.resp$SPP==SPP,"std.err"] <- mod.sum$tTable[,"Std.Error"]
+    drought.resp[drought.resp$drought.type==TYPE & drought.resp$SPP==SPP,"t.stat"] <- mod.sum$tTable[,"t-value"]
+    drought.resp[drought.resp$drought.type==TYPE & drought.resp$SPP==SPP,"p.val"] <- mod.sum$tTable[,"p-value"]
     
   }
   
@@ -472,7 +473,7 @@ drought.resp <- read.csv(file.path(path.google, "data/Drought_Response", "Drough
 
 
 ggplot(data=drought.resp) +
-  facet_grid(drought.type~PlotID) +
+  facet_grid(drought.type~SPP) +
   geom_bar(data=drought.resp[!is.na(drought.resp$p.val) & drought.resp$p.val>=0.001,], aes(x=as.factor(lag), y=estimate), stat="identity", fill="gray50") +
   # geom_vline(xintercept=as.factor(0), color="red") +
   geom_bar(data=drought.resp[!is.na(drought.resp$p.val) & drought.resp$p.val<0.001,], aes(x=as.factor(lag), y=estimate), stat="identity", fill="black") +
@@ -483,12 +484,12 @@ ggplot(data=drought.resp) +
         panel.background=element_rect(fill=NA, color="black"))
 
 
-dat.extreme <- dat.all[!is.na(dat.all$RWI.extreme) & !is.na(dat.all$lag.extreme) & dat.all$Crossdated=="Y",c("year", "CoreID", "PlotID", "Crossdated", "RWI.extreme", "lag.extreme", "pdsi.ncdc")]
+dat.extreme <- dat.all[!is.na(dat.all$RWI.extreme) & !is.na(dat.all$lag.extreme) & dat.all$Crossdated=="Y",c("year", "CoreID", "SPP", "Crossdated", "RWI.extreme", "lag.extreme", "pdsi.ncdc")]
 names(dat.extreme) <- car::recode(names(dat.extreme), "'RWI.extreme'='RWI.rel'; 'lag.extreme'='lag'")
 dat.extreme$drought.type <- as.factor("extreme")
 summary(dat.extreme)
 
-dat.severe <- dat.all[!is.na(dat.all$RWI.severe) & !is.na(dat.all$lag.severe) & dat.all$Crossdated=="Y",c("year", "CoreID", "PlotID", "Crossdated", "RWI.severe", "lag.severe", "pdsi.ncdc")]
+dat.severe <- dat.all[!is.na(dat.all$RWI.severe) & !is.na(dat.all$lag.severe) & dat.all$Crossdated=="Y",c("year", "CoreID", "SPP", "Crossdated", "RWI.severe", "lag.severe", "pdsi.ncdc")]
 names(dat.severe) <- car::recode(names(dat.severe), "'RWI.severe'='RWI.rel'; 'lag.severe'='lag'")
 dat.severe$drought.type <- as.factor("severe")
 summary(dat.severe)
@@ -502,7 +503,7 @@ summary(dat.drought)
 
 png(file.path(path.google, "figures/Drought_Response", "Drought_LagEffect_LME_StatSig_Extreme_Severe.png"), height=8, width=10, units="in", res=120)
 ggplot(data=dat.drought[!is.na(dat.drought$lag),]) +
-  facet_grid(drought.type~PlotID, scales="fixed") +
+  facet_grid(drought.type~SPP, scales="fixed") +
   geom_boxplot(aes(x=as.factor(lag), y=RWI.rel, fill=sig)) +
   geom_hline(yintercept=0, linetype="solid", color="blue") +
   scale_fill_manual(values=c("gray50", "red2")) +
@@ -517,7 +518,7 @@ dev.off()
 
 png(file.path(path.google, "figures/Drought_Response", "Drought_LagEffect_LME_StatSig_Severe.png"), height=8, width=10, units="in", res=120)
 ggplot(data=dat.drought[!is.na(dat.drought$lag) & dat.drought$drought.type=="severe",]) +
-  facet_wrap(~PlotID, scales="fixed") +
+  facet_wrap(~SPP, scales="fixed") +
   geom_boxplot(aes(x=as.factor(lag), y=RWI.rel, fill=sig)) +
   geom_hline(yintercept=0, linetype="solid", color="blue") +
   scale_fill_manual(values=c("gray50", "red2")) +
@@ -532,7 +533,7 @@ dev.off()
 
 png(file.path(path.google, "figures/Drought_Response", "Drought_LagEffect_LME_StatSig_Extreme.png"), height=8, width=10, units="in", res=120)
 ggplot(data=dat.drought[!is.na(dat.drought$lag) & dat.drought$drought.type=="extreme",]) +
-  facet_wrap(~PlotID, scales="fixed") +
+  facet_wrap(~SPP, scales="fixed") +
   geom_boxplot(aes(x=as.factor(lag), y=RWI.rel, fill=sig)) +
   geom_hline(yintercept=0, linetype="solid", color="blue") +
   scale_fill_manual(values=c("gray50", "red2")) +
@@ -544,6 +545,47 @@ ggplot(data=dat.drought[!is.na(dat.drought$lag) & dat.drought$drought.type=="ext
         panel.grid = element_blank(),
         panel.background=element_rect(fill=NA, color="black"))
 dev.off()
+
+
+for(SPP in unique(dat.drought$SPP)){
+  png(file.path(path.google, "figures/Drought_Response/LagResponse_LME_bySpecies", paste0("Drought_LagEffect_LME_StatSig_Severe_", SPP, ".png")), height=8, width=10, units="in", res=120)
+  print(
+  ggplot(data=dat.drought[!is.na(dat.drought$lag) & dat.drought$drought.type=="severe" & dat.drought$SPP==SPP,]) +
+    facet_wrap(~SPP, scales="fixed") +
+    geom_boxplot(aes(x=as.factor(lag), y=RWI.rel, fill=sig)) +
+    geom_hline(yintercept=0, linetype="solid", color="blue") +
+    scale_fill_manual(values=c("gray50", "red2")) +
+    scale_x_discrete(name="Drought Lag") +
+    scale_y_continuous(name="RWI difference", range(dat.drought$RWI.rel, na.rm=T)) +
+    theme(legend.position = "top",
+          legend.key = element_rect(fill=NA),
+          panel.spacing = unit(0, "lines"),
+          panel.grid = element_blank(),
+          panel.background=element_rect(fill=NA, color="black"))
+  )
+  dev.off()
+  
+  dat.tmp <- dat.drought[!is.na(dat.drought$lag) & dat.drought$drought.type=="extreme" & dat.drought$SPP==SPP,]
+  if(nrow(dat.tmp)==0) next
+  
+  png(file.path(path.google, "figures/Drought_Response/LagResponse_LME_bySpecies", paste0("Drought_LagEffect_LME_StatSig_Extreme_", SPP, ".png")), height=8, width=10, units="in", res=120)
+  print(
+  ggplot(data=dat.tmp) +
+    facet_wrap(~SPP, scales="fixed") +
+    geom_boxplot(aes(x=as.factor(lag), y=RWI.rel, fill=sig)) +
+    geom_hline(yintercept=0, linetype="solid", color="blue") +
+    scale_fill_manual(values=c("gray50", "red2")) +
+    scale_x_discrete(name="Drought Lag") +
+    scale_y_continuous(name="RWI difference", limits=range(dat.drought$RWI.rel, na.rm=T)) +
+    theme(legend.position = "top",
+          legend.key = element_rect(fill=NA),
+          panel.spacing = unit(0, "lines"),
+          panel.grid = element_blank(),
+          panel.background=element_rect(fill=NA, color="black"))
+  )
+  dev.off()
+  
+}
 
 # ---------------------------------------
 
