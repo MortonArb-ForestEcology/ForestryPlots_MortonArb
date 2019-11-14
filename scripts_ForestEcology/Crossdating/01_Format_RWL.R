@@ -18,8 +18,9 @@
 # fplot <- dir(path.raw, ".rwl")
 
 # Soft-coding approach = better more flexible code, but easier to break if you don't understand what's going on
-PLOT <- "QUBI-W" #
-path.dat <- "/Volumes/GoogleDrive/My Drive/Forestry Plots/Rollinson_2019_REU_ForestryPlots/data/RingsWidths_Raw/fall 2019"
+PLOT <- "TSCA-W2" #
+#path is currently for PC file stream. For Mac beginning should be "/VOlumes/GOogledrive/"
+path.dat <- "G:/My Drive/Forestry Plots/Rollinson_2019_REU_ForestryPlots/data/RingsWidths_Raw/fall 2019"
 fplot <- dir(file.path(path.dat, PLOT), ".rwl")
 
 for(i in 1:length(fplot)){
@@ -56,7 +57,7 @@ while(file.exists(file.path(path.out, paste0(file.prefix, ".rwl")))){
 dplR::write.rwl(rwl.all, file.path(path.out, paste0(file.prefix, ".rwl")), long.names=T)
 
 # Check Crossdating
-xdate1 <- dplR::corr.rwl.seg(rwl.all, seg.length=10)
+xdate1 <- dplR::corr.rwl.seg(rwl.all, seg.length=30, bin.floor=0)
 summary(xdate1)
 xdate1$flags
 # -------------
