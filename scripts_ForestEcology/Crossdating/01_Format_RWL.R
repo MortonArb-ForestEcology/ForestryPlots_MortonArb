@@ -18,7 +18,7 @@
 # fplot <- dir(path.raw, ".rwl")
 
 # Soft-coding approach = better more flexible code, but easier to break if you don't understand what's going on
-PLOT <- "TSCA-W2" #
+PLOT <- "PIST-W" #
 #path is currently for PC file stream. For Mac beginning should be "/VOlumes/GOogledrive/"
 path.dat <- "G:/My Drive/Forestry Plots/Rollinson_2019_REU_ForestryPlots/data/RingsWidths_Raw/fall 2019"
 fplot <- dir(file.path(path.dat, PLOT), ".rwl")
