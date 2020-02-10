@@ -5,20 +5,22 @@
 # -------------
 library(ggplot2) # Sometimes I call packages with ::, but I find that's a pain with ggplot 
 
-path.save <- "/Volumes/GoogleDrive/My Drive/Forestry Plots (1)/Rollinson_2019_REU_ForestryPlots/figures"
-gtrees <- googlesheets::gs_title("ForestryPlots_ForestEco_Master")
-gtrees
-# -------------
+path.save <- "G:/My Drive/Forestry Plots/Rollinson_2019_REU_ForestryPlots/figures"
+gtrees <- googlesheets4::sheets_find("ForestryPlots_ForestEco_Master")
 
+# -------------
+#Removing other sheets with similar names in other files
+gtrees <- gtrees[(c=1),]
 # -------------
 # Reading in the data and doing some quick stats
 # -------------
-dat.plot.master <- data.frame(googlesheets::gs_read(gtrees, ws="PlotLevelMaster"))
+dat.plot.master <- data.frame(googlesheets4::sheets_read(gtrees, sheet='PlotLevelMaster'))
+
 names(dat.plot.master) <- car::recode(names(dat.plot.master), "'PlotCode'='ForestryPlot'") # Making names consistent across datasets
 dat.plot.master
 
 # Note: I convert everything to data frame because I don't work with the tidyverse universe and sometimes weird things happen when I mix styles.  You don't have to do this, but this is how I work.
-dat.tree <- data.frame(googlesheets::gs_read(gtrees, ws="TreeData"))
+dat.tree <- data.frame(googlesheets4::sheets_read(gtrees, sheet="TreeData"))
 dat.tree$ForestryPlot <- as.factor(dat.tree$ForestryPlot)
 dat.tree$SubPlot <- as.factor(dat.tree$SubPlot)
 dat.tree$TreeID <- as.factor(dat.tree$TreeID)
