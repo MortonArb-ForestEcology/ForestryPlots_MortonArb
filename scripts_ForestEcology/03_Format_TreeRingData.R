@@ -23,10 +23,12 @@
 # Doing Everythign
 # --------------------------------------------------------
 # Establish a connection with the googlesheet file
-dat.proj <- googlesheets::gs_title("ForestryPlots_ForestEco_Master")
+dat.proj <- googlesheets4::sheets_find("ForestryPlots_ForestEco_Master")
+
+dat.proj <- dat.proj[(c=1),]
 
 # Pull & format our tree data
-dat.tree <- data.frame(googlesheets::gs_read(dat.proj, ws="TreeData"))
+dat.tree <- data.frame(googlesheets4::sheets_read(dat.proj, sheet="TreeData"))
 dat.tree$ForestryPlot <- as.factor(dat.tree$ForestryPlot)
 dat.tree$SubPlot <- as.factor(dat.tree$SubPlot)
 dat.tree$TreeID <- as.factor(dat.tree$TreeID)
@@ -35,8 +37,8 @@ dat.tree <- dat.tree[!is.na(dat.tree$ForestryPlot),]
 summary(dat.tree)
 
 # bring in the core metadata
-dat.core <- data.frame(googlesheets::gs_read(dat.proj, ws="Core Metadata"))
-names(dat.core) <- c("CoreID", "ForestryPlot", "SubPlot", "TreeID", "Date.Cored", "Crossdated", "Pith.Present", "Pith.Date", "Ring.First", "Ring.Last", "Bark.Present", "Rings.Missing", "Notes")
+dat.core <- data.frame(googlesheets4::sheets_read(dat.proj, sheet="Core Metadata"))
+names(dat.core) <- c("CoreID", "ForestryPlot", "SubPlot", "TreeID", "Date.Cored", "Crossdated", "Pith.Present", "Pith.Date", "Ring.First", "Ring.Last", "Bark.Present", "Rings.Missing", "Anomalies", "Redone?", "Edit.Notes")
 dat.core$CoreID <- as.factor(dat.core$CoreID)
 dat.core$ForestryPlot <- as.factor(dat.core$ForestryPlot)
 dat.core$SubPlot <- as.factor(dat.core$SubPlot)
@@ -55,7 +57,7 @@ dat.core$CoreID <- as.factor(paste(dat.core$TreeID2, dat.core$CoreID, sep=""))
 summary(dat.core)
 
 # File path to where the raw tree-ring data is stored
-path.rwl <- "/Volumes/GoogleDrive/My Drive/Forestry Plots/Rollinson_2019_REU_ForestryPlots/data/RingsWidths_Raw/crossdated/"
+path.rwl <- "G:/My Drive/Forestry Plots/Rollinson_2019_REU_ForestryPlots/data/RingsWidths_Raw/final/"
 
 # Get a list of the files (plots) we have available
 files.rwl <- dir(path.rwl, ".rwl")

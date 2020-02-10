@@ -6,8 +6,8 @@ site.lon <- -88.071797
 start.date <- "1895-01-01"
 end.date <- Sys.Date()
 
-path.save.reu <- "/Volumes/GoogleDrive/My Drive/Forestry Plots (1)/Rollinson_2019_REU_ForestryPlots/data/Meteorology/"
-path.save.met <- "/Volumes/GoogleDrive/My Drive/Arboretum Met Data/"
+path.save.reu <- "G:/My Drive/Forestry Plots/Rollinson_2019_REU_ForestryPlots/data/Meteorology/"
+path.save.met <- "G:/My Drive/Arboretum Met Data/"
 
 # ----------------------------
 # Daymet: 1980-2018 point extraction for Arb on Google
@@ -23,7 +23,7 @@ path.save.met <- "/Volumes/GoogleDrive/My Drive/Arboretum Met Data/"
 #    - swe  = snow water equivalent (mm) 
 #    - vp   = vapor pressure (Pa), 
 # ----------------------------
-path.daymet <- "/Volumes/GoogleDrive/My Drive/Arboretum Met Data/Daymet/MortonArb-VisitorCenter/"
+path.daymet <- "G:/My Drive/Arboretum Met Data/Daymet/MortonArb-VisitorCenter/"
 file.daymet <- dir(file.path(path.daymet, "netcdf"), ".nc")
 
 daymet.df <- data.frame() # we're just going to use rbind to append new data; this will be slower than some alternatives, but it's easier for the moment; See PRISM below for the better way to do this
