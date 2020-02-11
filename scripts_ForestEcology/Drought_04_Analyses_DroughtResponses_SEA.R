@@ -1,7 +1,7 @@
 # Very similar to other script, but using classic dendro SEA to verify
 library(ggplot2)
 
-path.google <- "/Volumes/GoogleDrive/My Drive/Forestry Plots/Rollinson_2019_REU_ForestryPlots/"
+path.google <- "G:/My Drive/Forestry Plots/Rollinson_2019_REU_ForestryPlots"
 
 # ---------------------------------------
 # 1. Compile drought data
@@ -16,7 +16,7 @@ path.google <- "/Volumes/GoogleDrive/My Drive/Forestry Plots/Rollinson_2019_REU_
 # Very Moist: 3.00 to 3.99
 # Extreme Moist: >= 4.00
 
-path.base <- "/Volumes/GoogleDrive/My Drive/Forestry Plots/Rollinson_2019_REU_ForestryPlots/data/Meteorology"
+path.base <- "G:/My Drive/Forestry Plots/Rollinson_2019_REU_ForestryPlots/data/Meteorology"
 # -----------------
 # Western Regional Climate Center's WestWide Drought Tracker
 # - From J. Abatzoglou; based on PRISM; probably skewed for Western US, but it'll work
@@ -133,7 +133,7 @@ drt.extreme <- sort(drt.extreme)
 drt.severe <- unique(dat.all[dat.all$pdsi.ncdc<=-3, "year"])
 drt.severe <- sort(drt.severe)
 
-path.crn <- file.path(path.google, "data/RingsWidths_Raw/crossdated/")
+path.crn <- file.path(path.google, "data/RingsWidths_Raw/final/")
 
 # Get a list of the files (plots) we have available
 files.crn <- dir(path.crn, ".crn")
@@ -172,7 +172,7 @@ for(PLT in unique(sea.all$PlotID)){
   # png(file.path(path.google, "figures/Drought_Response", "Drought_Effect_SEA_StatSig_Extreme.png"), height=6, width=6, units="in", res=120)
   if(nrow(sea.all[sea.all$type=="severe" & sea.all$PlotID==PLT & !is.na(sea.all$p),])==0) next
   
-  png(file.path(path.google, "figures/Drought_Response/SEM_bySpecies", paste0("Drought_Effect_SEA_StatSig_Severe_", PLT, ".png")), height=6, width=6, units="in", res=120)
+  png(file.path(path.google, "figures/Drought_Response/SEA_bySpecies", paste0("Drought_Effect_SEA_StatSig_Severe_", PLT, ".png")), height=6, width=6, units="in", res=120)
   if(nrow(sea.all[sea.all$type=="severe" & sea.all$PlotID==PLT & !is.na(sea.all$p) & sea.all$p<0.05,])>0){
     print(
       ggplot(data=sea.all[sea.all$type=="severe" & sea.all$PlotID==PLT,]) +
@@ -287,7 +287,7 @@ ggplot(data=sea.all[sea.all$type=="severe",]) +
         panel.spacing = unit(0, "lines"),
         panel.grid = element_blank(),
         panel.background=element_rect(fill=NA, color="black"))
-outdev.off()
+dev.off()
 
 write.csv(sea.all, file.path(path.google, "data/Drought_Response", "DroughtResp_SEA_out.csv"), row.names=F)  
 # ---------------------------------------
