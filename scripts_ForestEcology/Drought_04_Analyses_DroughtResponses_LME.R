@@ -1,6 +1,6 @@
 library(ggplot2)
 
-path.google <- "/Volumes/GoogleDrive/My Drive/Forestry Plots/Rollinson_2019_REU_ForestryPlots/"
+path.google <- "G:/My Drive/Forestry Plots/Rollinson_2019_REU_ForestryPlots/"
 
 # ---------------------------------------
 # 1. Compile drought data
@@ -15,7 +15,7 @@ path.google <- "/Volumes/GoogleDrive/My Drive/Forestry Plots/Rollinson_2019_REU_
 # Very Moist: 3.00 to 3.99
 # Extreme Moist: >= 4.00
 
-path.base <- "/Volumes/GoogleDrive/My Drive/Forestry Plots/Rollinson_2019_REU_ForestryPlots/data/Meteorology"
+path.base <- "G:/My Drive/Forestry Plots/Rollinson_2019_REU_ForestryPlots/data/Meteorology"
 # -----------------
 # Western Regional Climate Center's WestWide Drought Tracker
 # - From J. Abatzoglou; based on PRISM; probably skewed for Western US, but it'll work
@@ -289,7 +289,7 @@ dev.off()
 # Plot-by-plot approach
 # lm(RWI ~ pdsi.ncdc)
 
-mod.drt.plot <- nlme::lme(RWI ~ pdsi.ncdc*PlotID-1 - pdsi.ncdc, random=list(year=~1, TreeID=~1, CoreID=~1), data=dat.all[!is.na(dat.all$RWI) & dat.all$Crossdated=="Y", ], na.action=na.omit)
+mod.drt.plot <- nlme::lme(RWI ~ pdsi.ncdc*PlotID-1 - pdsi.ncdc, random=list(year=~1, CoreID=~1,  TreeID=~1), data=dat.all[!is.na(dat.all$RWI) & dat.all$Crossdated=="Y", ], na.action=na.omit)
 summary(mod.drt.plot)
 anova(mod.drt.plot)
 sum.plot <- summary(mod.drt.plot)
@@ -301,7 +301,7 @@ sum.plot$PlotID <- sort(unique(dat.all$PlotID))
 sum.plot <- sum.plot[,c("level", "factor", "PlotID", "Value", "Std.Error", "DF", "t.value", "p.value")]
 write.csv(sum.plot, file.path(path.google, "data/Drought_Response", "DroughtResponse_LME_stats_PlotID_eff.csv"), row.names=F)
 
-mod.drt.plot.comp <- nlme::lme(RWI ~ pdsi.ncdc*PlotID, random=list(year=~1, TreeID=~1, CoreID=~1), data=dat.all[!is.na(dat.all$RWI) & dat.all$Crossdated=="Y", ], na.action=na.omit)
+mod.drt.plot.comp <- nlme::lme(RWI ~ pdsi.ncdc*PlotID, random=list(year=~1, CoreID=~1, TreeID=~1), data=dat.all[!is.na(dat.all$RWI) & dat.all$Crossdated=="Y", ], na.action=na.omit)
 summary(mod.drt.plot.comp)
 anova(mod.drt.plot.comp)
 
