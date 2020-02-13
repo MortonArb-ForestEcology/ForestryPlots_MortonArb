@@ -24,9 +24,16 @@ dat.tree <- data.frame(googlesheets4::sheets_read(gtrees, sheet="TreeData"))
 dat.tree$ForestryPlot <- as.factor(dat.tree$ForestryPlot)
 dat.tree$SubPlot <- as.factor(dat.tree$SubPlot)
 dat.tree$TreeID <- as.factor(dat.tree$TreeID)
-dat.tree$Density <- 1/dat.tree$SubPlotRadius_m # calculating a density so we can sum to get total plot density
-dat.tree$BasalArea <- pi*(dat.tree$DBH/2)^2
+dat.tree$SubPlotArea_m <- pi *(dat.tree$SubPlotRadius_m)^2
+dat.tree$Density <- 1/dat.tree$SubPlotArea_m # calculating a density so we can sum to get total plot density
+dat.tree$BasalArea <- (pi*(dat.tree$DBH/2)^2)/dat.tree$SubPlotArea_m
 summary(dat.tree)
+
+dat.sdensity <- aggregate(Density~ForestryPlot, data=dat.tree, sum)
+dat.bamean <- aggregate(BasalArea~ForestryPlot, data=dat.tree, mean)
+dat.plotmeans <- merge(dat.sdensity, dat.bamean, by.x=c("ForestryPlot"), by.y=c("ForestryPlot"))
+colnames(dat.plotmeans) <- c("ForestryPlot", "StemDensity_m2", "BasalArea (cm2 vs m2 per m2)")
+write.csv(dat.plotmeans, file.path(path.save,  file = "ForestryPlot_means.csv"), row.names = FALSE) 
 
 # Correcting bearings so we're going FROM plot center to tree, not other way; this gives us deviation from north
 dat.tree$Azimuth <- dat.tree$Azimuth-180 
