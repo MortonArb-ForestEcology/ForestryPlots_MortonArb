@@ -1,6 +1,6 @@
 library(ggplot2)
 
-path.google <- "G:/My Drive/Forestry Plots/Rollinson_2019_REU_ForestryPlots/"
+path.google <- "/Volumes/GoogleDrive/My Drive/Forestry Plots/Rollinson_2019_REU_ForestryPlots/"
 
 # ---------------------------------------
 # 1. Compile drought data
@@ -15,7 +15,7 @@ path.google <- "G:/My Drive/Forestry Plots/Rollinson_2019_REU_ForestryPlots/"
 # Very Moist: 3.00 to 3.99
 # Extreme Moist: >= 4.00
 
-path.base <- "G:/My Drive/Forestry Plots/Rollinson_2019_REU_ForestryPlots/data/Meteorology"
+path.base <- "/Volumes/GoogleDrive/My Drive/Forestry Plots/Rollinson_2019_REU_ForestryPlots/data/Meteorology"
 # -----------------
 # Western Regional Climate Center's WestWide Drought Tracker
 # - From J. Abatzoglou; based on PRISM; probably skewed for Western US, but it'll work
