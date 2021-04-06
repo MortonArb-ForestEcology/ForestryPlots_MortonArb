@@ -1,7 +1,8 @@
 # Analysis of timing of ciritical period for growth
 library(ggplot2)
 
-path.google <- "/Volumes/GoogleDrive/My Drive/Forestry Plots/Rollinson_2019_REU_ForestryPlots/"
+#path.google <- "/Volumes/GoogleDrive/My Drive/Forestry Plots/Rollinson_2019_REU_ForestryPlots/"
+path.google <- "G:/My Drive/Forestry Plots/Rollinson_2019_REU_ForestryPlots/"
 
 # ----------------------------------
 # 1. read in & format datasets: tree ring, climate

@@ -31,7 +31,7 @@ dat.proj <- dat.proj[(c=1),]
 dat.tree <- data.frame(googlesheets4::sheets_read(dat.proj, sheet="TreeData"))
 dat.tree$ForestryPlot <- as.factor(dat.tree$ForestryPlot)
 dat.tree$SubPlot <- as.factor(dat.tree$SubPlot)
-dat.tree$TreeID <- as.factor(dat.tree$TreeID)
+dat.tree$TreeID <- as.factor(stringr::str_pad(dat.tree$TreeID, 3, "left", "0"))
 dat.tree$TreeID2 <- as.factor(paste(dat.tree$SubPlot, dat.tree$TreeID, sep=""))
 dat.tree <- dat.tree[!is.na(dat.tree$ForestryPlot),]
 summary(dat.tree)
@@ -49,7 +49,7 @@ dat.core$Bark.Present <- as.factor(dat.core$Bark.Present)
 dat.core$Ring.Last <- car::recode(dat.core$Ring.Last, "'2018 (partial 19)'='2019'")
 summary(dat.core)
 
-summary(dat.core[dat.core$ForestryPlot=="JUCH-W",])
+summary(dat.core[dat.core$ForestryPlot=="QUAL-E",])
 
 # Making columns line up with titles in other sheets
 dat.core$TreeID2 <- as.factor(paste(dat.core$SubPlot, dat.core$TreeID, sep=""))
@@ -61,6 +61,8 @@ path.rwl <- "G:/My Drive/Forestry Plots/Rollinson_2019_REU_ForestryPlots/data/Ri
 
 # Get a list of the files (plots) we have available
 files.rwl <- dir(path.rwl, ".rwl")
+#Temp solution to remove AEGL-E and JUCH-W since they don't have any crossdated cores and this breaks the current loop
+files.rwl <- files.rwl[c(2:5, 7:18)]
 
 # Loop through each file and do some stuff to it
 dat.all <- data.frame() # Set up a empty data frame to store everything in
@@ -80,11 +82,30 @@ for(plt in 1:length(files.rwl)){
   # Detrend ring-widths to remove potentially confounding tree-level temporal trends
   #  - NOTE: There are many ways we could detrend.  We're using spline as a default.
   dat.rwl2 <- dat.rwl # Making a second data frame where we can get rid of 2019 for spline purposes
-  dat.rwl2["2019",] <- NA
+  dat.rwl2[nrow(dat.rwl2),] <- NA
   dat.detrend <- dplR::detrend(dat.rwl2, method="Spline")
-
+  
+  #Loop to fix names in the second batch of cores
+  i <- 0
+  for(text in names(dat.detrend)){
+    i <- i + 1
+    if(length(text > 7)){
+      begin <- substring(text, 1, 6)
+      end <- substring(text, 7, 8)
+      if(end == 11){
+        end <- "B"
+      }
+      if(end == 10)
+      {
+        end <- "A"
+      }
+    }
+    new.name <- paste0(begin, end)
+    names(dat.detrend)[i] <- new.name
+  }
+  
   # Turn things into a chronology & store it for safe keeping
-  dat.chron <- dplR::chron(dat.detrend[names(dat.detrend) %in% dat.core$CoreID[dat.core$Crossdated=="Y" & !is.na(dat.core$Crossdated)]])
+  dat.chron <- dplR::chron(dat.detrend[names(dat.detrend) %in% dat.core$CoreID[dat.core$Crossdated=="Y"]])
   
   png(file.path(path.rwl, paste0(PLT, "_chronology.png")), height=6, width=8, units="in", res=120)
   dplR::plot.crn(dat.chron, crn.lwd=2, crn.line.col="red2")
@@ -201,9 +222,9 @@ summary(dat.all)
 
 summary(dat.all[is.na(dat.all$Crossdated),])
 unique(dat.all[is.na(dat.all$Crossdated),"PlotID"])
-summary(dat.all[dat.all$PlotID=="JUCH-W",])
+summary(dat.all[dat.all$PlotID=="QUAL-E",])
 
 
 # "/Volumes/GoogleDrive/My Drive/Forestry Plots/Rollinson_2019_REU_ForestryPlots/data/RingsWidths_Raw/crossdated/"
-write.csv(dat.all, file.path(path.rwl, "../..", "Data_TreeRings_compiled_all.csv"), row.names=F)
+write.csv(dat.all, file.path("G:/My Drive/Forestry Plots/Rollinson_2019_REU_ForestryPlots/data/", "Data_TreeRings_compiled_all.csv"), row.names=F)
 # --------------------------------------------------------
